@@ -1,0 +1,15 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		gradlePluginPortal()
+	}
+}
+
+sourceControl {
+	gitRepository("https://github.com/maruohon/malilib.git") {
+		producesModule("fi.dy.masa:malilib")
+	}
+}

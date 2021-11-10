@@ -1,0 +1,8 @@
+{
+  "minVersion": "0.8",
+  "package": "here.lenrik.chili_map.test.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "RegistryKeyHasher"
+  ]
+}

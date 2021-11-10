@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "here.lenrik.chili_map.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "MinecraftClientMixin"
+  ],
+  "client": [
+    "ClientWorldMixin",
+    "ConnectMixin",
+    "GameRendererMixin",
+    "HudMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
