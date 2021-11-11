@@ -1,4 +1,4 @@
-package here.lenrik.chili_map.test.mixin;
+package here.lenrik.chili_map.mixin;
 
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.RegistryKey;
