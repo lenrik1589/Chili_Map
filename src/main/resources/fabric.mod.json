@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "chilli_map",
-  "version": "${version}",
+  "version": "${project.version}",
   "name": "Chilli_map",
   "description": "Mod that tries to replicate vanilla map feel as closely as possible",
   "authors": [
@@ -26,7 +26,7 @@
     "chili_map.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.10.0",
-    "minecraft": "1.17.1"
+    "fabricloader": ">=${project.loader_version}",
+    "minecraft": ">=${project.minecraft_version}"
   }
 }

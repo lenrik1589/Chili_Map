@@ -10,7 +10,6 @@ import net.minecraft.item.map.MapIcon;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3f;
 import org.jetbrains.annotations.Contract;
 
@@ -18,10 +17,10 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public class Misc{
-	public static Vec2i mapPos(Vec3d pos){
+	public static Vec2i mapPos(long x, long z, int zoom){
 		return new Vec2i(
-				(int) Math.floor((pos.x + 64) / 128),
-				(int) Math.floor((pos.z + 64) / 128)
+				(int) ((x + 64) / (128 << zoom)),
+				(int) ((z + 64) / (128 << zoom))
 		);
 	}
 
