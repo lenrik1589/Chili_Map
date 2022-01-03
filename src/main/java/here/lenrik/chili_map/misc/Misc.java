@@ -1,5 +1,6 @@
 package here.lenrik.chili_map.misc;
 
+import here.lenrik.chili_map.Vec2i;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.RenderLayer;
@@ -11,44 +12,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3f;
-import org.jetbrains.annotations.Contract;
 
 import java.util.Iterator;
-import java.util.Objects;
 
 public class Misc{
-	public static Vec2i mapPos(long x, long z, int zoom){
-		return new Vec2i(
-				(int) ((x + 64) / (128 << zoom)),
-				(int) ((z + 64) / (128 << zoom))
-		);
-	}
-
-	public record Vec2i(int x, int y){
-		@Override @Contract(pure = true) public int x( ){
-			return x;
-		}
-
-		@Override @Contract(pure = true) public int y( ){
-			return y;
-		}
-
-		@Override public boolean equals(Object o){
-			if(this == o) return true;
-			if(o == null || getClass() != o.getClass()) return false;
-			Vec2i vec2i = (Vec2i) o;
-			return x == vec2i.x && y == vec2i.y;
-		}
-
-		@Override public int hashCode( ){
-			return Objects.hash(x, y);
-		}
-
-		@Override public String toString( ){
-			return "(%d, %d)".formatted(x, y);
-		}
-
-	}
 
 	public static void renderMapIcons(MatrixStack matrices, Iterator<MapIcon> iconIterator, VertexConsumerProvider vertexConsumers, boolean hidePlayerIcons, RenderLayer MAP_ICONS_RENDER_LAYER){
 		var k = 0;

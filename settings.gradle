@@ -1,4 +1,5 @@
 pluginManagement {
+//	includeBuild "carpet:fabric-carpet"
 	repositories {
 		maven {
 			name = 'Quilt-release'
@@ -21,7 +22,11 @@ pluginManagement {
 }
 
 sourceControl {
-	gitRepository("https://github.com/maruohon/malilib.git") {
-		producesModule("fi.dy.masa:malilib")
+	gitRepository(URI.create('https://github.com/gnembon/fabric-carpet.git')) {
+//		includeBuild rootDir
+		producesModule("carpet:fabric-carpet")
+	}
+	gitRepository(URI.create('https://github.com/maruohon/malilib.git')) {
+//		producesModule("fi.dy.masa.malilib:malilib-fabric-1.18.0")
 	}
 }

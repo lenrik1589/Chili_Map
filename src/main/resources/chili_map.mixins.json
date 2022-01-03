@@ -4,12 +4,15 @@
   "package": "here.lenrik.chili_map.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "RegistryKeyHasher",
-    "HudMixin"
+    "RegistryKeyHasher"
   ],
   "client": [
+    "client.ClientPlayNetworkHandlerMixin",
+    "client.ClientWorldMixin",
+    "client.GameOptionsMixin",
     "client.MinecraftClientMixin",
-    "client.ClientWorldMixin"
+    "client.ClientPlayNetworkHandlerMixin",
+    "client.HudMixin"
   ],
   "injectors": {
     "defaultRequire": 1
