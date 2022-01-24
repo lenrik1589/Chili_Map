@@ -6,8 +6,8 @@ data class MapMarker(var type: Type = Type.BLUE_MARKER, var pos: Vec3i, val rota
 
 
 	enum class Type(val saveable: Boolean) {
-		PLAYER(false),
-		FRAME(false),
+		SELF(false),
+		OTHER(false),
 		RED_MARKER(true),
 		BLUE_MARKER(true),
 		TARGET_X(true),

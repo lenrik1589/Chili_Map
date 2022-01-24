@@ -12,7 +12,8 @@
     "client.GameOptionsMixin",
     "client.MinecraftClientMixin",
     "client.ClientPlayNetworkHandlerMixin",
-    "client.HudMixin"
+    "client.HudMixin",
+    "client.MinecraftServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

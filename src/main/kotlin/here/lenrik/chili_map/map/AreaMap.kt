@@ -28,6 +28,8 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 	companion object {
 		const val pixelCount = 1 shl 14
 
+		private val borderRadii = 2
+
 		fun toMapPosAtZoomLevel(pos: Vec3d, zoomLevel: Int): Vec3i {
 
 			val sideLength = 128 * (1 shl zoomLevel)
@@ -45,8 +47,6 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 	}
 
 	private var updateTracker = 0
-
-	private val borderRadii = 2
 
 	var hasUpdated: Boolean = true
 
@@ -66,25 +66,26 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 			val playerXRelativeMapCenter = MathHelper.floor(entity.getX() - mapCenter.x) / scale + 64
 			val playerYRelativeMapCenter = MathHelper.floor(entity.getZ() - mapCenter.z) / scale + 64
 			var renderDistance = 128 / scale
-			var hasLevelChange = false
 			if (world.dimension.hasCeiling()) {
 				renderDistance /= 2
-				var prevH = Int.MIN_VALUE
-				var highest: Int
-				exitFor@ for (x in mapCenter.x.toInt() - scale * 64 until mapCenter.x.toInt() + scale * 64) {
-					for (z in mapCenter.z.toInt() - scale * 64 until mapCenter.z.toInt() + scale * 64) {
-						highest = world.getWorldChunk(BlockPos(x, 0, z)).sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x and 15, z and 15) + 1
-						if (prevH != Int.MIN_VALUE || prevH != highest) {
-							hasLevelChange = true
-							break@exitFor
-						}
-						prevH = highest
-					}
-				}
+//				var prevH = Int.MIN_VALUE
+//				var highest: Int
+//				exitFor@ for (x in mapCenter.x.toInt() - scale * 64 until mapCenter.x.toInt() + scale * 64) {
+//					for (z in mapCenter.z.toInt() - scale * 64 until mapCenter.z.toInt() + scale * 64) {
+//						highest = world.getWorldChunk(BlockPos(x, 0, z)).sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x and 15, z and 15) + 1
+//						if (prevH != Int.MIN_VALUE || prevH != highest) {
+//							hasLevelChange = true
+//							break@exitFor
+//						}
+//						prevH = highest
+//					}
+//				}
 			}
 
 			++updateTracker
 			var updatedLastPixel = false
+//			var hasLevelChange = false
+//			var heghestSoFar = Int.MIN_VALUE
 			for (mapPixelX in playerXRelativeMapCenter - renderDistance + 1 until playerXRelativeMapCenter + renderDistance) {
 				if (mapPixelX and 15 == updateTracker and 15 || updatedLastPixel) {
 					updatedLastPixel = false
@@ -94,73 +95,74 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 							val pixelDX = mapPixelX - playerXRelativeMapCenter
 							val pixelDY = mapPixelY - playerYRelativeMapCenter
 							val insideBorder =
-								pixelDX * pixelDX + pixelDY * pixelDY > (renderDistance - borderRadii) * (renderDistance - borderRadii)
+								pixelDX * pixelDX + pixelDY * pixelDY > (renderDistance - Companion.borderRadii) * (renderDistance - Companion.borderRadii)
 							val pixelBlockX = ((mapCenter.x / scale + mapPixelX - 64) * scale).toInt()
 							val pixelBlockZ = ((mapCenter.z / scale + mapPixelY - 64) * scale).toInt()
 							val multiset: Multiset<MapColor> = LinkedHashMultiset.create()
 							val chunk = world.getWorldChunk(BlockPos(pixelBlockX, 0, pixelBlockZ))
 							if (!chunk.isEmpty) {
+//								chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, mapPixelX, mapPixelY)
 								val chunkPos = chunk.pos
 								val chunkX = pixelBlockX and 15
 								val chunkZ = pixelBlockZ and 15
 								var topFluidCount = 0
 								var currentPixelHeight = 0.0
-								if (world.dimension.hasCeiling() && !hasLevelChange) {
-									var random = pixelBlockX + pixelBlockZ * 231871
-									random = random * random * 31287121 + random * 11
-									if (random shr 20 and 1 == 0) {
-										multiset.add(Blocks.DIRT.defaultState.getMapColor(world, BlockPos.ORIGIN), 10)
-									} else {
-										multiset.add(Blocks.STONE.defaultState.getMapColor(world, BlockPos.ORIGIN), 100)
-									}
-									currentPixelHeight = 100.0
-								} else {
-									val highestPos = BlockPos.Mutable()
-									val fluidWalker = BlockPos.Mutable()
-									for (oX in 0 until scale) {
-										for (oZ in 0 until scale) {
-											var highest = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, oX + chunkX, oZ + chunkZ) + 1
-											var blockState: BlockState
-											if (highest <= world.bottomY + 1) {
-												blockState = Blocks.BEDROCK.defaultState
-											} else {
+//								if (world.dimension.hasCeiling() && !hasLevelChange) {
+//									var random = pixelBlockX + pixelBlockZ * 231871
+//									random = random * random * 31287121 + random * 11
+//									if (random shr 20 and 1 == 0) {
+//										multiset.add(Blocks.DIRT.defaultState.getMapColor(world, BlockPos.ORIGIN), 10)
+//									} else {
+//										multiset.add(Blocks.STONE.defaultState.getMapColor(world, BlockPos.ORIGIN), 100)
+//									}
+//									currentPixelHeight = 100.0
+//								} else {
+								val highestPos = BlockPos.Mutable()
+								val fluidWalker = BlockPos.Mutable()
+								for (oX in 0 until scale) {
+									for (oZ in 0 until scale) {
+										var highest = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, oX + chunkX, oZ + chunkZ) + 1
+										var blockState: BlockState
+										if (highest <= world.bottomY + 1) {
+											blockState = Blocks.BEDROCK.defaultState
+										} else {
+											do {
+												--highest
+												highestPos.set(chunkPos.startX + oX + chunkX, highest, chunkPos.startZ + oZ + chunkZ)
+												blockState = chunk.getBlockState(highestPos)
+											} while (blockState.getMapColor(
+													world,
+													highestPos
+												) === MapColor.CLEAR && highest > world.bottomY
+											)
+											if (highest > world.bottomY && !blockState.fluidState.isEmpty) {
+												var lowest = highest - 1
+												fluidWalker.set(highestPos)
+												var blockState2: BlockState
 												do {
-													--highest
-													highestPos.set(chunkPos.startX + oX + chunkX, highest, chunkPos.startZ + oZ + chunkZ)
-													blockState = chunk.getBlockState(highestPos)
-												} while (blockState.getMapColor(
-														world,
-														highestPos
-													) === MapColor.CLEAR && highest > world.bottomY
-												)
-												if (highest > world.bottomY && !blockState.fluidState.isEmpty) {
-													var lowest = highest - 1
-													fluidWalker.set(highestPos)
-													var blockState2: BlockState
-													do {
-														fluidWalker.y = lowest--
-														blockState2 = chunk.getBlockState(fluidWalker)
-														++topFluidCount
-													} while (lowest > world.bottomY && !blockState2.fluidState.isEmpty)
-													blockState = this.getFluidStateIfVisible(world, blockState, highestPos)!!
-												}
+													fluidWalker.y = lowest--
+													blockState2 = chunk.getBlockState(fluidWalker)
+													++topFluidCount
+												} while (lowest > world.bottomY && !blockState2.fluidState.isEmpty)
+												blockState = this.getFluidStateIfVisible(world, blockState, highestPos)!!
 											}
+										}
 //											state.removeBanner(world, chunkPos.startX + oX + chunkX, chunkPos.startZ + oZ + chunkZ)
-											currentPixelHeight += highest / (scale * scale)
-											if (!world.dimension.hasCeiling() || world.registryKey === World.NETHER && blockState.block != Blocks.BEDROCK) {
-												multiset.add(blockState.getMapColor(world, highestPos))
+										currentPixelHeight += highest / (scale * scale)
+										if (!world.dimension.hasCeiling() || world.registryKey === World.NETHER && blockState.block != Blocks.BEDROCK) {
+											multiset.add(blockState.getMapColor(world, highestPos))
+										} else {
+											var randomNumber: Int = pixelBlockX + pixelBlockZ * 231871
+											randomNumber = randomNumber * randomNumber * 31287121 + randomNumber * 11
+											if (randomNumber shr 20 and 1 == 0) {
+												multiset.add(Blocks.DIRT.defaultState.getMapColor(world, BlockPos.ORIGIN), 10)
 											} else {
-												var randomNumber: Int = pixelBlockX + pixelBlockZ * 231871
-												randomNumber = randomNumber * randomNumber * 31287121 + randomNumber * 11
-												if (randomNumber shr 20 and 1 == 0) {
-													multiset.add(Blocks.DIRT.defaultState.getMapColor(world, BlockPos.ORIGIN), 10)
-												} else {
-													multiset.add(Blocks.STONE.defaultState.getMapColor(world, BlockPos.ORIGIN), 100)
-												}
+												multiset.add(Blocks.STONE.defaultState.getMapColor(world, BlockPos.ORIGIN), 100)
 											}
 										}
 									}
 								}
+//								}
 								topFluidCount /= scale * scale
 								val color = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset), MapColor.CLEAR)
 //								"https://open.spotify.com/track/45NoQeZGKVdNGN5FsX7im1?si=4587f908ae0a4ca1"/**/
@@ -254,6 +256,6 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 	}
 }
 
-private operator fun Vec3d.plus(other: Vec3d): Vec3d {
+operator fun Vec3d.plus(other: Vec3d): Vec3d {
 	return add(other)
 }

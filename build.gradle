@@ -65,12 +65,13 @@ dependencies {
 	}
 //	modImplementation("")
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation(include("org.jetbrains.kotlin:kotlin-stdlib:${project.kotlin_version}"))
+	modImplementation "net.fabricmc.fabric-api:fabric-screen-api-v1:+"
+	implementation(include("org.jetbrains.kotlin:kotlin-stdlib"))
 //	ant {
 //		get(src: "https://masa.dy.fi/tmp/minecraft/mods/misc_test_versions/", dest: "", username: 'anonymous', password: 'anonymous')
 //	}
 //	modImplementationMapped files("https://github.com/gnembon/fabric-carpet/releases/download/1.4.50/fabric-carpet-1.17.1-1.4.50+v211021.jar")
-//	modImplementation "maven.modrinth:modmenu:2.0.4"
+//	modImplementationMapped "maven.modrinth:modmenu:3.0.1"
 
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.

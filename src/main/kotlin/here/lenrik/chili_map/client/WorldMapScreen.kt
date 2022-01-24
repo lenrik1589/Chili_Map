@@ -5,10 +5,9 @@ import here.lenrik.chili_map.client.RenderHelper.Companion.MAP_ICONS_RENDER_LAYE
 import here.lenrik.chili_map.map.AreaMap
 import here.lenrik.chili_map.map.LevelMap
 import here.lenrik.chili_map.map.MapMarker
-import here.lenrik.chili_map.map.MapMarker.Type.FRAME
-import here.lenrik.chili_map.map.MapMarker.Type.PLAYER
+import here.lenrik.chili_map.map.MapMarker.Type.OTHER
+import here.lenrik.chili_map.map.MapMarker.Type.SELF
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.DrawableHelper
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.render.VertexConsumer
 import net.minecraft.client.render.VertexConsumerProvider
@@ -50,6 +49,8 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 		val vertexConsumers: VertexConsumerProvider.Immediate = client.bufferBuilders.entityVertexConsumers
 		val zoom = min(max(log2(2 / scale).toInt(), 0), 4)
 		val scaleZoom = 1 shl zoom
+		client.debugRenderer.toggleShowChunkBorder()
+		val showChunkDebug = client.debugRenderer.toggleShowChunkBorder()
 		if (client.options.debugEnabled) {
 			client.textRenderer.draw(
 				matrices,
@@ -75,23 +76,24 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			((width / 2 - currentMouseX) / scale * guiScale - xOffset).toInt(),
 			((height / 2 - currentMouseY) / scale * guiScale - yOffset).toInt()
 		)
-		val lines = mutableListOf<Text>()
-		for (region in ChilliMapClient.container!!.getLevel(
+//		val lines = mutableListOf<Text>()
+		for ((regionPos, region) in ChilliMapClient.container!!.getLevel(
 			client.world!!.registryKey.value
 		).regions) {
-			val topLeftRegionCorner = region.key * LevelMap.boundary - Vec2i(64, 64)
-			val bottomRightRegionCorner = (region.key + Vec2i(1, 1)) * LevelMap.boundary - Vec2i(64, 64)
+			val topLeftRegionCorner = regionPos * LevelMap.boundary - Vec2i(64, 64)
+			val bottomRightRegionCorner = (regionPos + Vec2i(1, 1)) * LevelMap.boundary - Vec2i(64, 64)
 //			lines += Text.of(
-//				buildString { append(region.value.pos.toShortString()); append(": "); append((topLeftRegionCorner.x > bottomRightScreenCorner.x).toInt()); append(" "); append((topLeftRegionCorner.y > bottomRightScreenCorner.y).toInt()); append(" "); append((topLeftScreenCorner.x > bottomRightRegionCorner.x).toInt()); append(" "); append((topLeftScreenCorner.y > bottomRightRegionCorner.y).toInt()); append(" "); append(topLeftRegionCorner.toShortString()); append(" > "); append(bottomRightScreenCorner.toShortString()); append(" | "); append(topLeftScreenCorner.toShortString()); append(" > "); append(bottomRightRegionCorner.toShortString()) }
+//				buildString { append(region.pos.toShortString()); append(": "); append((topLeftRegionCorner.x > bottomRightScreenCorner.x).toInt()); append(" "); append((topLeftRegionCorner.y > bottomRightScreenCorner.y).toInt()); append(" "); append((topLeftScreenCorner.x > bottomRightRegionCorner.x).toInt()); append(" "); append((topLeftScreenCorner.y > bottomRightRegionCorner.y).toInt()); append(" "); append(topLeftRegionCorner.toShortString()); append(" > "); append(bottomRightScreenCorner.toShortString()); append(" | "); append(topLeftScreenCorner.toShortString()); append(" > "); append(bottomRightRegionCorner.toShortString()) }
 //			)
 			if (
 				topLeftRegionCorner.x > bottomRightScreenCorner.x ||
 				topLeftRegionCorner.y > bottomRightScreenCorner.y ||
 				topLeftScreenCorner.x > bottomRightRegionCorner.x ||
-				topLeftScreenCorner.y > bottomRightRegionCorner.y
+				topLeftScreenCorner.y > bottomRightRegionCorner.y ||
+				region.isEmpty()
 			) continue
 			++shownRegions
-			for (mapZoomPos in region.value.areas.keys.stream().sorted(
+			for (mapZoomPos in region.areas.keys.stream().sorted(
 				Comparator.comparingInt { vec: Vec3i -> (vec.x + vec.y) }
 			)) {
 				val topLeftAreaCorner = Vec2i(
@@ -102,57 +104,54 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 					(mapZoomPos.x + 1) * 128 * scaleZoom - 64,
 					(mapZoomPos.y + 1) * 128 * scaleZoom - 64
 				)
+				val map = region.getMap(mapZoomPos)
 				if (
 					topLeftAreaCorner.x > bottomRightScreenCorner.x ||
 					topLeftAreaCorner.y > bottomRightScreenCorner.y ||
 					bottomRightAreaCorner.x < topLeftScreenCorner.x ||
 					bottomRightAreaCorner.y < topLeftScreenCorner.y ||
-					mapZoomPos.z != zoom
+					mapZoomPos.z != zoom || map.isEmpty()
 				) continue
 				++shownMaps
 				matrices.push()
-				val texture = ChilliMapClient.renderer.getMapTexture(region.value.getMap(mapZoomPos))
+				val texture = ChilliMapClient.renderer.getMapTexture(map)
 				matrices.translate(
-					((mapZoomPos.x * 128) * scaleZoom).toDouble() - 64,
-					((mapZoomPos.y * 128) * scaleZoom).toDouble() - 64,
+					(mapZoomPos.x * 128) * scaleZoom - 64.0,
+					(mapZoomPos.y * 128) * scaleZoom - 64.0,
 					.0
 				)
 				matrices.scale(scaleZoom.toFloat(), scaleZoom.toFloat(), 1f)
 				texture.updateIfNeeded()
 				texture.draw(matrices, vertexConsumers)
-				client.debugRenderer.toggleShowChunkBorder()
-				if (client.debugRenderer.toggleShowChunkBorder()) {
+
+				if (showChunkDebug && scale >= 0.03125) {
 					vertexConsumers.drawCurrentLayer()
 					matrices.push()
-					val i = (128 * scale * scaleZoom / guiScale + .1).toInt()
 					matrices.scale(
 						(guiScale.toDouble() / scaleZoom / scale).toFloat(),
 						(guiScale.toDouble() / scaleZoom / scale).toFloat(),
 						1f
 					)
 					matrices.translate(.0, .0, 600.0)
-					for (j in 0 until 2 * i) {
-						DrawableHelper.fill(
-							matrices,
-							if (j < i) j else i - 1,
-							if (j < i) 0 else j - i,
-							if (j < i) j + 1 else i,
-							if (j < i) 1 else (j - i) + 1,
-							-0x2fffffff or (j * 256 / (i * 2)) or ((256 - j * 256 / (i * 2)) shl 16)
-						)
-						fill(
-							matrices,
-							if (j < i) 0 else j - i,
-							if (j < i) j else i - 1,
-							if (j < i) 1 else (j - i) + 1,
-							if (j < i) j + 1 else i,
-							-0x2fffffff or (j * 256 / (i * 2)) or ((256 - j * 256 / (i * 2)) shl 16)
-						)
+					with((128 * scale * scaleZoom / guiScale + .1).toInt()) {
+						val i = this
+//						DrawableHelper.fillGradient(matrices, 0, 0, 1, i, )
+						fill(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7fFF7f7F)
+						fill(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7fFF7f7F)
+						matrices.push()
+						matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(90f))
+						matrices.translate(.0, .0 - i, .0)
+						fill(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7fFF7f7F)
+						fill(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7fFF7f7F)
+						matrices.pop()
+						if (scale * scaleZoom > 3.6) {
+							for (d in .0..i.toDouble() step 16 * scale / guiScale){ // 16 * scale / guiScale) {
+								val j  = d.toInt()
+								fill(matrices, j + 0x0, 0 + 0x0, j + 0x1, i + 0x0, 0x7f7f7fff)
+								fill(matrices, 0 + 0x0, j + 0x0, i + 0x0, j + 0x1, 0x7f7f7fff)
+							}
+						}
 					}
-//					DrawableHelper.fill(matrices, 0 + 0, 0 + 0, i - 1, 1 + 0, 0x7fFF0000)
-//					DrawableHelper.fill(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7fFF0000)
-//					DrawableHelper.fill(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7f0000FF)
-//					DrawableHelper.fill(matrices, 1 + 0, i - 1, i + 0, i + 0, 0x7f0000FF)
 					if (scale * scaleZoom > .25) {
 						matrices.scale(.5f, .5f, 1f)
 //						matrices.translate(0.0, 0.0, -1000.0)
@@ -171,6 +170,24 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 				}
 				matrices.pop()
 			}
+			if (showChunkDebug) {
+				matrices.push()
+				matrices.translate(topLeftRegionCorner.x - .0, topLeftRegionCorner.y - .0, .0)
+				matrices.scale((guiScale / scale).toFloat(), (guiScale / scale).toFloat(), (guiScale / scale).toFloat())
+				with((8192 / guiScale * scale + .1).toInt()) {
+					val i = this
+//						DrawableHelper.fillGradient(matrices, 0, 0, 1, i, )
+					fillGradient(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7f00FF00, 0x7f7fFF7F)
+					fillGradient(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7f7fFF7F, 0x7fFFffFF)
+					matrices.push()
+					matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(90f))
+					matrices.translate(.0, .0 - i, .0)
+					fillGradient(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7f7fFF7F, 0x7f00FF00)
+					fillGradient(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7fFFffFF, 0x7f7fFF7F)
+					matrices.pop()
+				}
+				matrices.pop()
+			}
 		}
 		matrices.pop()
 		matrices.translate(topLeftScreenCorner.x.toDouble(), topLeftScreenCorner.y.toDouble(), .0)
@@ -183,7 +200,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			}.map<PlayerEntity, MapMarker> { player ->
 				val rotation = ((player.yaw + (if (player.yaw < 0) -8 else +8)) / 22.5).toInt()
 				MapMarker(
-					if (player == MinecraftClient.getInstance().player!!) PLAYER else FRAME,
+					if (player == MinecraftClient.getInstance().player!!) SELF else OTHER,
 					with(
 						(Vec2i(
 							floor(player.x).toInt(),
@@ -223,10 +240,10 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			client.textRenderer.draw(matrices, Text.of(shownMaps.toString()), 0f, 0f, 0xffffff)
 			matrices.translate(.0, textRenderer.fontHeight.toDouble(), .0)
 			client.textRenderer.draw(matrices, Text.of(shownRegions.toString()), 0f, 0f, 0xffffff)
-			for (line in lines) {
-				matrices.translate(.0, textRenderer.fontHeight.toDouble(), .0)
-				client.textRenderer.draw(matrices, line, 0f, 0f, -1)
-			}
+//			for (line in lines) {
+//				matrices.translate(.0, textRenderer.fontHeight.toDouble(), .0)
+//				client.textRenderer.draw(matrices, line, 0f, 0f, -1)
+//			}
 			matrices.pop()
 		}
 		client.profiler.pop()
@@ -273,7 +290,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 		var scalingFactor = ((1 + amount) * sqr2 + (1 - amount) / sqr2) / 2
 		val pScale = scale
 		scale *= scalingFactor
-		scale = if (scale > 128.0001) scale / sqr2 else if (scale < 1.0 / (1 shl 8)) scale * sqr2 else scale
+		scale = if (scale > 128.0001) scale / sqr2 else if (scale <= 1.0 / (1 shl 11) * sqr2) scale * sqr2 else scale
 		scalingFactor = if (pScale == scale) 1.0 else scalingFactor
 		var guiScale = client!!.options.guiScale
 		guiScale = if (guiScale == 0) scaleWorkaround else guiScale
@@ -282,7 +299,19 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 		return super.mouseScrolled(mouseX, mouseY, amount)
 	}
 
-	override fun isPauseScreen(): Boolean = false
+	override fun isPauseScreen() = false
 }
 
 fun Boolean.toInt() = compareTo(false)
+
+infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
+	require(start.isFinite())
+	require(endInclusive.isFinite())
+	require(step > 0.0) { "Step must be positive, was: $step." }
+	val sequence = generateSequence(start) { previous ->
+		if (previous == Double.POSITIVE_INFINITY) return@generateSequence null
+		val next = previous + step
+		if (next > endInclusive) null else next
+	}
+	return sequence.asIterable()
+}

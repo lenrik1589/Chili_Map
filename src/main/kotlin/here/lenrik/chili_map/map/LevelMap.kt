@@ -65,9 +65,9 @@ data class LevelMap(val levelId: Identifier, val name: Text) {
 						)
 					}
 //					println("region contains ${region.areas.size} maps")
-					if(region.areas.size == 0){
+					if (region.areas.size == 0) {
 						false
-					}	else {
+					} else {
 						regions[pos] = region
 						true
 					}
@@ -101,6 +101,10 @@ data class LevelMap(val levelId: Identifier, val name: Text) {
 		fun addAreaMap(pos: Vec3i, colors: ByteArray) {
 			if (!isMapInside(pos)) throw IndexOutOfBoundsException("map with coordinates ${pos.toShortString()} is out of bounds for ${this.pos.toShortString()}")
 			areas[pos] = AreaMap(pos, colors)
+		}
+
+		fun isEmpty() = when (areas.values.filter { !it.isEmpty() }) {
+			listOf<AreaMap>() -> true; else -> false
 		}
 
 	}

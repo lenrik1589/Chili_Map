@@ -28,9 +28,9 @@ class ChilliMapClient : ClientModInitializer {
 		fun onJoined(connection: ClientConnection) {
 			autoSaveCounter = 0
 			val name =
-				if (connection.isLocal)
-					MinecraftClient.getInstance().server!!.saveProperties.levelName
-				else
+				if (connection.isLocal) {
+					(MinecraftClient.getInstance().server as SessionAccessor?)!!.getSession().directoryName
+				}else
 					connection.address.toString().replace("/", "_")
 			val mapsStoragePath = ChilliMap.configDir.resolve(name)
 			if (connection.isLocal) {

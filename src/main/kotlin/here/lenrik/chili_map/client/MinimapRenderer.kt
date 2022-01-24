@@ -5,12 +5,13 @@ import here.lenrik.chili_map.client.ChilliMapClient.Companion.zoom
 import here.lenrik.chili_map.client.RenderHelper.Companion.MAP_ICONS_RENDER_LAYER
 import here.lenrik.chili_map.map.AreaMap
 import here.lenrik.chili_map.map.MapMarker
-import here.lenrik.chili_map.map.MapMarker.Type.FRAME
-import here.lenrik.chili_map.map.MapMarker.Type.PLAYER
+import here.lenrik.chili_map.map.MapMarker.Type.OTHER
+import here.lenrik.chili_map.map.MapMarker.Type.SELF
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.block.MapColor
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.DrawableHelper
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.VertexConsumer
 import net.minecraft.client.render.VertexConsumerProvider
@@ -27,7 +28,10 @@ import javax.imageio.ImageIO
 import kotlin.math.floor
 
 @Environment(EnvType.CLIENT)
-class MinimapRenderer(val textureManager: TextureManager) {
+class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
+	private val MAP_BACKGROUND = RenderLayer.getText(Identifier("textures/map/map_background.png"))
+	private val MAP_BACKGROUND_CHECKERBOARD =
+		RenderLayer.getText(Identifier("textures/map/map_background_checkerboard.png"))
 	private val DEFAULT_IMAGE_WIDTH = 128
 	private val DEFAULT_IMAGE_HEIGHT = 128
 	private val mapTextures = HashMap<AreaMap, MapTexture>()
@@ -41,7 +45,7 @@ class MinimapRenderer(val textureManager: TextureManager) {
 
 	fun clear() {
 		val manager = MinecraftClient.getInstance().textureManager
-		for ((_, texture) in mapTextures) {
+		for((_, texture) in mapTextures) {
 			texture.map.hasUpdated = true
 			manager.destroyTexture(texture.id)
 		}
@@ -52,25 +56,24 @@ class MinimapRenderer(val textureManager: TextureManager) {
 		val client = MinecraftClient.getInstance()
 		val level = ChilliMapClient.container!!.getLevel(MinecraftClient.getInstance().world!!.registryKey.value)
 
-		if (!client.options.debugEnabled) {
+		if(!client.options.debugEnabled) {
 			client.gameRenderer.lightmapTextureManager.disable()
 			matrices.push()
 			matrices.translate(10.0, 10.0, .0)
+			val consumerProviders = client.bufferBuilders.entityVertexConsumers as VertexConsumerProvider.Immediate
+			val backgroundConsumer: VertexConsumer = consumerProviders.getBuffer(MAP_BACKGROUND_CHECKERBOARD)
+			val matrix4f = matrices.peek().model
+			val tl = -6.0f
+			val br = 134.0f
+			backgroundConsumer.vertex(matrix4f, tl, br, -1.0f).color(255, 255, 255, 255).texture(0.0f, 1.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, br, br, -1.0f).color(255, 255, 255, 255).texture(1.0f, 1.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, br, tl, -1.0f).color(255, 255, 255, 255).texture(1.0f, 0.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, tl, tl, -1.0f).color(255, 255, 255, 255).texture(0.0f, 0.0f).light(255).next()
 			val map = level.getMap(client.player!!.pos, zoom)
 			val texture = ChilliMapClient.renderer.getMapTexture(map)
 			texture.updateIfNeeded()
-			val consumerProviders = client.bufferBuilders.entityVertexConsumers as VertexConsumerProvider.Immediate
 			texture.draw(matrices, consumerProviders)
-//			client.textRenderer.draw(matrices, Text.of(map.pos.toShortString()), 0f, 128f, -1)
-//			matrices.translate(134.0, .0, .0)
 			consumerProviders.drawCurrentLayer()
-//			client.textRenderer.draw(
-//				matrices,
-//				Text.of("${ChilliMapClient.updateCounter}"),
-//				0f,
-//				client.textRenderer.fontHeight.toFloat(),
-//				-1
-//			)
 			with(AreaMap.toTopLeftCorner(map.pos)) {
 				with(Vec2i(this.x.toInt(), this.z.toInt())) {
 					val to = this + Vec2i(128 shl zoom, 128 shl zoom)
@@ -81,9 +84,9 @@ class MinimapRenderer(val textureManager: TextureManager) {
 						it.addAll(MinecraftClient.getInstance().world!!.players.filter { player ->
 							player.x >= this.x && player.x < to.x && player.z >= this.y && player.z < to.y
 						}.map<PlayerEntity, MapMarker> { player ->
-							val rotation = ((player.yaw + (if (player.yaw < 0) -8 else +8)) / 22.5).toInt()
+							val rotation = ((player.yaw + (if(player.yaw < 0) -8 else +8)) / 22.5).toInt()
 							MapMarker(
-								if (player == MinecraftClient.getInstance().player!!) PLAYER else FRAME,
+								if(player == MinecraftClient.getInstance().player!!) SELF else OTHER,
 								with(
 									(Vec2i(floor(player.x).toInt(), floor(player.z).toInt()) - this) * Vec2i(128, 128) / (to - this) + this
 								) { Vec3i(this.x.toDouble(), player.y, this.y.toDouble()) },
@@ -118,7 +121,7 @@ class MinimapRenderer(val textureManager: TextureManager) {
 			matrices.pop()
 			client.gameRenderer.lightmapTextureManager.enable()
 		}
-		if (ChilliMapClient.autoSaveCounter >= 3000) {
+		if(ChilliMapClient.autoSaveCounter >= 3000) {
 			ChilliMapClient.autoSaveCounter -= 1000
 			ChilliMapClient.container!!.save(autoSave = true)
 		}
@@ -136,8 +139,8 @@ class MinimapRenderer(val textureManager: TextureManager) {
 		private var renderLayer: RenderLayer = RenderLayer.getText(id)
 
 		private fun updateTexture() {
-			for (y in 0..127) {
-				for (x in 0..127) {
+			for(y in 0..127) {
+				for(x in 0..127) {
 					val index = x + y * 128
 					val color = MapColor.getRenderColor(this.map.colors[index].toInt())
 					texture.image!!.setPixelColor(x, y, color)
@@ -145,7 +148,7 @@ class MinimapRenderer(val textureManager: TextureManager) {
 				}
 			}
 			texture.upload()
-			if (map.pos == Vec3i(24, -11, 0)) ImageIO.write(image, "PNG", File("file.png"))
+			if(map.pos == Vec3i(24, -11, 0)) ImageIO.write(image, "PNG", File("file.png"))
 			map.hasUpdated = false
 		}
 
@@ -162,7 +165,7 @@ class MinimapRenderer(val textureManager: TextureManager) {
 		}
 
 		fun updateIfNeeded() {
-			if (map.hasUpdated && !map.isEmpty()) {
+			if(map.hasUpdated && !map.isEmpty()) {
 				updateTexture()
 			}
 		}
