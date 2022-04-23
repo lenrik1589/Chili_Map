@@ -23,6 +23,10 @@ data class Vec2i(val x: Int, val y: Int) {
 		return Vec2i(x + other.x, y + other.y)
 	}
 
+	fun plus(otherX: Int, otherY: Int): Vec2i {
+		return Vec2i(x + otherX, y + otherY)
+	}
+
 	operator fun minus(other: Vec2i): Vec2i {
 		return this + (other * -1)
 	}

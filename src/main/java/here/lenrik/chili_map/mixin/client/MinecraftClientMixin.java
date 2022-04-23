@@ -29,7 +29,7 @@ abstract class MinecraftClientMixin {
 	@Inject(
 			method = "handleInputEvents",
 			at = @At("RETURN")
-	) private void openWorldMap (CallbackInfo ci) {
+	) private void openWorldMap (CallbackInfo info) {
 		if(ChilliMapClient.Companion.getOpenWorldMapKey().isPressed()) {
 			MinecraftClient.getInstance().setScreen(new WorldMapScreen(Objects.requireNonNull(ChilliMapClient.Companion.getContainer()).getName()));
 		}

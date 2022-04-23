@@ -4,7 +4,7 @@ import here.lenrik.chili_map.client.ChilliMapClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.option.KeyBind;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -21,7 +21,7 @@ import static java.util.List.of;
 @Environment(EnvType.CLIENT)
 public class GameOptionsMixin {
 
-	@Mutable @Shadow @Final public KeyBinding[] allKeys;
+	@Mutable @Shadow @Final public KeyBind[] allKeys;
 
 	@Inject(
 			method = "<init>",
@@ -35,6 +35,6 @@ public class GameOptionsMixin {
 				ChilliMapClient.Companion.getZoomInKey(),
 				ChilliMapClient.Companion.getZoomOutKey()
 		));
-		allKeys = list.toArray(new KeyBinding[0]);
+		allKeys = list.toArray(new KeyBind[0]);
 	}
 }

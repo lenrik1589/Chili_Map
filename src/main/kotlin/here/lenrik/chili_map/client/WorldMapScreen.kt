@@ -26,14 +26,11 @@ import kotlin.math.log2
 class WorldMapScreen(text: Text?) : Screen(text) {
 	private var xOffset: Float
 	private var yOffset: Float
-	private var initialScale = 2
-	private var scale = initialScale + .0
-	private var scaleWorkaround: Int
+	private var initialScale = 2.0
+	private var scale = initialScale
 
 	init {
 		assert(MinecraftClient.getInstance().player != null) { "Player must be present" }
-		scaleWorkaround = /*0.f + */
-			MinecraftClient.getInstance().window.width / MinecraftClient.getInstance().window.scaledWidth
 		xOffset = -MinecraftClient.getInstance().player!!.blockX.toFloat()
 		yOffset = -MinecraftClient.getInstance().player!!.blockZ.toFloat()
 	}
@@ -43,8 +40,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 		client.profiler.push("chili_map_world_map_render")
 		renderBackground(matrices)
 		assert(client.player != null && client.world != null) { "call this method in the actual world with a player" }
-		var guiScale = client.options.guiScale
-		guiScale = if (guiScale == 0) scaleWorkaround else guiScale
+		val guiScale = client.window.scaleFactor
 		super.render(matrices, mouseX, mouseY, delta)
 		val vertexConsumers: VertexConsumerProvider.Immediate = client.bufferBuilders.entityVertexConsumers
 		val zoom = min(max(log2(2 / scale).toInt(), 0), 4)
@@ -128,8 +124,8 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 					vertexConsumers.drawCurrentLayer()
 					matrices.push()
 					matrices.scale(
-						(guiScale.toDouble() / scaleZoom / scale).toFloat(),
-						(guiScale.toDouble() / scaleZoom / scale).toFloat(),
+						(guiScale / scaleZoom / scale).toFloat(),
+						(guiScale / scaleZoom / scale).toFloat(),
 						1f
 					)
 					matrices.translate(.0, .0, 600.0)
@@ -190,10 +186,11 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			}
 		}
 		matrices.pop()
-		matrices.translate(topLeftScreenCorner.x.toDouble(), topLeftScreenCorner.y.toDouble(), .0)
+		matrices.translate(topLeftScreenCorner.x.toDouble() * 2, topLeftScreenCorner.y.toDouble() * 2, .0)
 //		matrices.scale(-(scale / guiScale).toFloat(), -(scale / guiScale).toFloat(), 1f)
 //		matrices.translate(-topLeftScreenCorner.x.toDouble(), -topLeftScreenCorner.y.toDouble(), .0)
 		val vertexConsumer: VertexConsumer = vertexConsumers.getBuffer(MAP_ICONS_RENDER_LAYER)
+		matrices.push()
 		ChilliMapClient.container!!.getMarkers(topLeftScreenCorner, bottomRightScreenCorner).also {
 			it.addAll(MinecraftClient.getInstance().world!!.players.filter { player ->
 				player.x >= topLeftScreenCorner.x && player.x < bottomRightScreenCorner.x && player.z >= topLeftScreenCorner.y && player.z < bottomRightScreenCorner.y/* || true*/
@@ -218,12 +215,11 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			val m = (b / 16 + 1).toFloat() / 16.0f
 			matrices.translate(.0, .0, -0.001)
 			matrices.push()
-			matrices.translate(-it.pos.x.toDouble() + topLeftScreenCorner.x, -it.pos.z.toDouble() + topLeftScreenCorner.y, .0)
+			matrices.translate(-it.pos.x.toDouble()/* + topLeftScreenCorner.x*/, -it.pos.z.toDouble()/* + topLeftScreenCorner.y*/, .0)
 			matrices.scale(4.0f, 4.0f, 3.0f)
 			matrices.translate(0.125, 0.125, 0.0)
 			matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(it.rotation * 22.5f))
 			matrices.translate(-0.125, 0.125, 0.0)
-//			matrices.translate(-0.125, 0.125, 0.0)
 			val model = matrices.peek().model
 			vertexConsumer.vertex(model, -1f, +1f, 0f).color(255, 255, 255, 255).texture(g, h).light(255).next()
 			vertexConsumer.vertex(model, +1f, +1f, 0f).color(255, 255, 255, 255).texture(l, h).light(255).next()
@@ -231,6 +227,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			vertexConsumer.vertex(model, -1f, -1f, 0f).color(255, 255, 255, 255).texture(g, m).light(255).next()
 			matrices.pop()
 		}
+		matrices.pop()
 		vertexConsumers.drawCurrentLayer()
 		matrices.pop()
 		vertexConsumers.drawCurrentLayer()
@@ -270,8 +267,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 	}
 
 	override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
-		var guiScale = client!!.options.guiScale
-		guiScale = if (guiScale == 0) scaleWorkaround else guiScale
+		val guiScale = client!!.window.scaleFactor
 		xOffset += (currentMouseX / scale * guiScale).toFloat()
 		yOffset += (currentMouseY / scale * guiScale).toFloat()
 		currentMouseX = 0.0
@@ -280,7 +276,6 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 	}
 
 	override fun resize(client: MinecraftClient, width: Int, height: Int) {
-		scaleWorkaround = MinecraftClient.getInstance().window.width / MinecraftClient.getInstance().window.scaledWidth
 		super.resize(client, width, height)
 	}
 
@@ -292,8 +287,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 		scale *= scalingFactor
 		scale = if (scale > 128.0001) scale / sqr2 else if (scale <= 1.0 / (1 shl 11) * sqr2) scale * sqr2 else scale
 		scalingFactor = if (pScale == scale) 1.0 else scalingFactor
-		var guiScale = client!!.options.guiScale
-		guiScale = if (guiScale == 0) scaleWorkaround else guiScale
+		val guiScale = client!!.window.scaleFactor
 		xOffset += ((width / 2 - mouseX) * guiScale * (scalingFactor - 1) / scale).toFloat()
 		yOffset += ((height / 2 - mouseY) * guiScale * (scalingFactor - 1) / scale).toFloat()
 		return super.mouseScrolled(mouseX, mouseY, amount)
@@ -302,16 +296,18 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 	override fun isPauseScreen() = false
 }
 
-fun Boolean.toInt() = compareTo(false)
+//fun Boolean.toInt() = compareTo(false)
 
 infix fun ClosedRange<Double>.step(step: Double): Iterable<Double> {
 	require(start.isFinite())
 	require(endInclusive.isFinite())
 	require(step > 0.0) { "Step must be positive, was: $step." }
+	require(start + step != start) {"Step mus"}
 	val sequence = generateSequence(start) { previous ->
-		if (previous == Double.POSITIVE_INFINITY) return@generateSequence null
-		val next = previous + step
-		if (next > endInclusive) null else next
+		if (previous == Double.POSITIVE_INFINITY) null else {
+			val next = previous + step
+			if(next > endInclusive) null else next
+		}
 	}
 	return sequence.asIterable()
 }

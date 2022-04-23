@@ -1,0 +1,41 @@
+{
+  "environment": "*",
+  "mixin": "chili_map.mixins.json",
+  "quilt_loader": {
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "versions": ">=${project.loader_version}"
+      },
+      {
+        "id": "minecraft",
+        "versions": ">=${project.minecraft_version}"
+      }
+    ],
+    "group": "here.lenrik",
+    "id": "chilli_map",
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "metadata": {
+      "name": "Chilli_map",
+      "description": "Mod that tries to replicate vanilla map feel as closely as possible",
+      "contributors": {
+        "lenrik": "Author"
+      },
+      "icon": "assets/chili_map/icon.png",
+      "license": "LGPL-3.0"
+    },
+    "version": "${project.version}",
+    "entrypoints": {
+      "init": [
+        "here.lenrik.chili_map.ChilliMap"
+      ],
+      "client_init": [
+        "here.lenrik.chili_map.client.ChilliMapClient"
+      ],
+      "server_init": [
+        "here.lenrik.chili_map.server.ChilliMapServer"
+      ]
+    }
+  },
+  "schemaVersion": 1
+}

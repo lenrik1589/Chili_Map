@@ -5,6 +5,7 @@ import here.lenrik.chili_map.map.MapUpdater;
 import kotlin.NotImplementedError;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.Holder;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.MutableWorldProperties;
@@ -22,8 +23,8 @@ import static org.spongepowered.asm.mixin.injection.At.Shift.AFTER;
 
 @Mixin(ClientWorld.class)
 abstract class ClientWorldMixin extends World {
-	protected ClientWorldMixin (MutableWorldProperties mutableWorldProperties, RegistryKey<World> registryKey, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l) {
-		super(mutableWorldProperties, registryKey, dimensionType, supplier, bl, bl2, l);
+	protected ClientWorldMixin (MutableWorldProperties mutableWorldProperties, RegistryKey<World> registryKey, Holder<DimensionType> holder, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l) {
+		super(mutableWorldProperties, registryKey, holder, supplier, bl, bl2, l);
 		throw new NotImplementedError();
 	}
 
@@ -35,7 +36,7 @@ abstract class ClientWorldMixin extends World {
 					shift = AFTER
 			)
 	) private void updateMap (CallbackInfo info) {
-		MapUpdater.Companion.updateColors(this, Objects.requireNonNull(MinecraftClient.getInstance().player));
+		MapUpdater.Companion.updateContainer(this, Objects.requireNonNull(MinecraftClient.getInstance().player));
 	}
 
 	@Inject(
