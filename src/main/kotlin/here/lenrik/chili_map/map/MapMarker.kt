@@ -1,8 +1,36 @@
 package here.lenrik.chili_map.map
 
-import net.minecraft.util.math.Vec3i
+import net.minecraft.nbt.NbtCompound
+import net.minecraft.nbt.NbtElement
+import net.minecraft.text.MutableText
+import net.minecraft.text.Text
+import net.minecraft.util.math.Vec3d
 
-data class MapMarker(var type: Type = Type.BLUE_MARKER, var pos: Vec3i, val rotation: Float) {
+data class MapMarker(
+	var type: Type = Type.BLUE_MARKER,
+	var pos: Vec3d,
+	val rotation: Float,
+	var name: MutableText? = Text.of("").copy()
+) {
+	companion object {
+		fun fromNbt(nbt: NbtCompound): MapMarker {
+			return MapMarker(
+				Type.values()[nbt.getByte("type").toInt()],
+				nbt.getLongArray("pos").map(Double.Companion::fromBits).let { Vec3d(it[0], it[1], it[2]) },
+				nbt.getFloat("rot"),
+				Text.Serializer.fromJson(nbt.getString("name"))
+			)
+		}
+	}
+
+	fun asNbt(): NbtElement {
+		val nbt = NbtCompound()
+		nbt.putByte("type", type.ordinal.toByte())
+		nbt.putLongArray("pos", listOf(pos.x, pos.y, pos.z).map(Double::toRawBits))
+		nbt.putFloat("rot", rotation)
+		nbt.putString("name", Text.Serializer.toJson(name))
+		return nbt
+	}
 
 
 	enum class Type(val saveable: Boolean) {

@@ -6,7 +6,7 @@ import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.server.DedicatedServerModInitializer;
 
 @Environment(EnvType.SERVER)
-public class ChilliMapServer implements DedicatedServerModInitializer {
+public class ChiliMapServer implements DedicatedServerModInitializer {
 	@Override
 	public void onInitializeServer (ModContainer mod) {
 	}

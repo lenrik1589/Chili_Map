@@ -10,9 +10,10 @@
     "client.ClientPlayNetworkHandlerMixin",
     "client.ClientWorldMixin",
     "client.GameOptionsMixin",
-    "client.MinecraftClientMixin",
     "client.HudMixin",
-    "client.MinecraftServerMixin"
+    "client.MinecraftClientMixin",
+    "client.MinecraftServerMixin",
+    "client.PLMixin"
   ],
   "injectors": {
     "defaultRequire": 1

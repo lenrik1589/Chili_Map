@@ -4,9 +4,7 @@ package here.lenrik.chili_map.map
 
 import com.google.common.collect.Iterables
 import com.google.common.collect.LinkedHashMultiset
-import com.google.common.collect.Multiset
 import com.google.common.collect.Multisets
-import here.lenrik.chili_map.client.ChilliMapClient.Companion.borderRadii
 import net.minecraft.block.BlockState
 import net.minecraft.block.Blocks
 import net.minecraft.block.MapColor
@@ -45,7 +43,7 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 
 		fun getFluidStateIfVisible(world: World, state: BlockState, pos: BlockPos): BlockState? {
 			val fluidState = state.fluidState
-			return if(!fluidState.isEmpty && !state.isSideSolidFullSquare(
+			return if (!fluidState.isEmpty && !state.isSideSolidFullSquare(
 					world,
 					pos,
 					Direction.UP
@@ -73,27 +71,27 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 		val playerXRelativeMapCenter = MathHelper.floor(entity.x - mapCenter.x) / scale + 64
 		val playerYRelativeMapCenter = MathHelper.floor(entity.z - mapCenter.z) / scale + 64
 		var renderDistance = 128 / scale
-		if(world.dimension.hasCeiling()) {
+		if (world.dimension.hasCeiling()) {
 			renderDistance /= 2
 		}
 
 		++updateTracker
 		var updatedLastPixel = false
-		for(mapPixelX in playerXRelativeMapCenter - renderDistance + 1 until playerXRelativeMapCenter + renderDistance) {
-			if(mapPixelX and 15 == updateTracker and 15 || updatedLastPixel) {
+		for (mapPixelX in playerXRelativeMapCenter - renderDistance + 1 until playerXRelativeMapCenter + renderDistance) {
+			if (mapPixelX and 15 == updateTracker and 15 || updatedLastPixel) {
 				updatedLastPixel = false
 				var d = 0.0
-				for(mapPixelY in playerYRelativeMapCenter - renderDistance - 1 until playerYRelativeMapCenter + renderDistance) {
-					if(mapPixelX >= 0 && mapPixelY >= -1 && mapPixelX < 128 && mapPixelY < 128) {
+				for (mapPixelY in playerYRelativeMapCenter - renderDistance - 1 until playerYRelativeMapCenter + renderDistance) {
+					if (mapPixelX >= 0 && mapPixelY >= -1 && mapPixelX < 128 && mapPixelY < 128) {
 						val pixelDX = mapPixelX - playerXRelativeMapCenter
 						val pixelDY = mapPixelY - playerYRelativeMapCenter
 						val insideBorder =
-							pixelDX * pixelDX + pixelDY * pixelDY > (renderDistance - borderRadii) * (renderDistance - borderRadii)
+							pixelDX * pixelDX + pixelDY * pixelDY > (renderDistance/* - borderRadii*/) * (renderDistance/* - borderRadii*/)
 						val pixelBlockX = ((mapCenter.x / scale + mapPixelX - 64) * scale).toInt()
 						val pixelBlockZ = ((mapCenter.z / scale + mapPixelY - 64) * scale).toInt()
-						val multiset: Multiset<MapColor> = LinkedHashMultiset.create()
+						val multiset = LinkedHashMultiset.create<MapColor>()
 						val chunk = world.getWorldChunk(BlockPos(pixelBlockX, 0, pixelBlockZ))
-						if(!chunk.isEmpty) {
+						if (!chunk.isEmpty) {
 							val chunkPos = chunk.pos
 							val chunkX = pixelBlockX and 15
 							val chunkZ = pixelBlockZ and 15
@@ -101,23 +99,23 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 							var currentPixelHeight = 0.0
 							val highestPos = BlockPos.Mutable()
 							val fluidWalker = BlockPos.Mutable()
-							for(oX in 0 until scale) {
-								for(oZ in 0 until scale) {
+							for (oX in 0 until scale) {
+								for (oZ in 0 until scale) {
 									var highest = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, oX + chunkX, oZ + chunkZ) + 1
 									var blockState: BlockState
-									if(highest <= world.bottomY + 1) {
+									if (highest <= world.bottomY + 1) {
 										blockState = Blocks.BEDROCK.defaultState
 									} else {
 										do {
 											--highest
 											highestPos.set(chunkPos.startX + oX + chunkX, highest, chunkPos.startZ + oZ + chunkZ)
 											blockState = chunk.getBlockState(highestPos)
-										} while(blockState.getMapColor(
+										} while (blockState.getMapColor(
 												world,
 												highestPos
 											) === MapColor.CLEAR && highest > world.bottomY
 										)
-										if(highest > world.bottomY && !blockState.fluidState.isEmpty) {
+										if (highest > world.bottomY && !blockState.fluidState.isEmpty) {
 											var lowest = highest - 1
 											fluidWalker.set(highestPos)
 											var blockState2: BlockState
@@ -125,17 +123,17 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 												fluidWalker.y = lowest--
 												blockState2 = chunk.getBlockState(fluidWalker)
 												++topFluidCount
-											} while(lowest > world.bottomY && !blockState2.fluidState.isEmpty)
+											} while (lowest > world.bottomY && !blockState2.fluidState.isEmpty)
 											blockState = getFluidStateIfVisible(world, blockState, highestPos)!!
 										}
 									}
 									currentPixelHeight += highest / (scale * scale)
-									if(!world.dimension.hasCeiling() || world.registryKey === World.NETHER && blockState.block != Blocks.BEDROCK) {
+									if (!world.dimension.hasCeiling() || world.registryKey === World.NETHER && blockState.block != Blocks.BEDROCK) {
 										multiset.add(blockState.getMapColor(world, highestPos))
 									} else {
 										var randomNumber: Int = pixelBlockX + pixelBlockZ * 231871
 										randomNumber = randomNumber * randomNumber * 31287121 + randomNumber * 11
-										if(randomNumber shr 20 and 1 == 0) {
+										if (randomNumber shr 20 and 1 == 0) {
 											multiset.add(Blocks.DIRT.defaultState.getMapColor(world, BlockPos.ORIGIN), 10)
 										} else {
 											multiset.add(Blocks.STONE.defaultState.getMapColor(world, BlockPos.ORIGIN), 100)
@@ -144,30 +142,32 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 								}
 							}
 							topFluidCount /= scale * scale
-							@Suppress("UnstableApiUsage") val color = Iterables.getFirst(Multisets.copyHighestCountFirst(multiset), MapColor.CLEAR)
+							@Suppress("UnstableApiUsage") val color =
+								Iterables.getFirst(Multisets.copyHighestCountFirst(multiset), MapColor.CLEAR)
 //								"https://open.spotify.com/track/45NoQeZGKVdNGN5FsX7im1?si=4587f908ae0a4ca1"/**/
-							val brightness = if(color === MapColor.WATER_BLUE) {
+							val brightness = if (color === MapColor.WATER_BLUE) {
 								val y = topFluidCount * 0.1 + (mapPixelX + mapPixelY and 1) * 0.2
-								if(y < 0.5) {
+								if (y < 0.5) {
 									Brightness.HIGH
-								} else if(y > 0.9) {
+								} else if (y > 0.9) {
 									Brightness.LOW
 								} else {
 									Brightness.NORMAL
 								}
 							} else {
 								val y = (currentPixelHeight - d) * 4.0 / (scale + 4) + ((mapPixelX + mapPixelY and 1) - 0.5) * 0.4
-								if(y > 0.6) {
+								if (y > 0.6) {
 									Brightness.HIGH
-								} else if(y < -0.6) {
+								} else if (y < -0.6) {
 									Brightness.LOW
 								} else {
 									Brightness.NORMAL
 								}
 							}
 							d = currentPixelHeight
-							if(mapPixelY >= 0 && pixelDX * pixelDX + pixelDY * pixelDY < renderDistance * renderDistance && (!insideBorder || mapPixelX + mapPixelY and 1 != 0)) {
-								updatedLastPixel = putColor(mapPixelX, mapPixelY, color.getRenderColorByte(brightness)) or updatedLastPixel
+							if (mapPixelY >= 0 && pixelDX * pixelDX + pixelDY * pixelDY < renderDistance * renderDistance && (!insideBorder || mapPixelX + mapPixelY and 1 != 0)) {
+								updatedLastPixel =
+									putColor(mapPixelX, mapPixelY, color.getRenderColorByte(brightness)) or updatedLastPixel
 								hasUpdated = hasUpdated or updatedLastPixel
 							}
 						}
@@ -178,33 +178,37 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 	}
 
 	override fun toString(): String {
-		return "${pos.toShortString()}${if(isEmpty()) ", empty" else ""}"
+		return "${pos.toShortString()}${if (isEmpty()) ", empty" else ""}"
 	}
 
 
 	fun putColor(x: Int, z: Int, color: Byte): Boolean {
-		val b = colors[x + z * 128]
-		return if(b != color) {
-			this.setColor(x, z, color)
-			true
-		} else {
-			false
+		synchronized(colors) {
+			val b = colors[x + z * 128]
+			return if (b != color) {
+				this.setColor(x, z, color)
+				true
+			} else {
+				false
+			}
 		}
 	}
 
 	fun setColor(x: Int, z: Int, color: Byte) {
-		colors[x + z * 128] = color
+		synchronized(colors) {
+			colors[x + z * 128] = color
+		}
 //		this.markDirty(x, z)
 	}
 
 	override fun equals(other: Any?): Boolean {
-		if(this === other) return true
-		if(javaClass != other?.javaClass) return false
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
 
 		other as AreaMap
 
-		if(pos != other.pos) return false
-		if(!colors.contentEquals(other.colors)) return false
+		if (pos != other.pos) return false
+		if (!colors.contentEquals(other.colors)) return false
 
 		return true
 	}
@@ -216,7 +220,9 @@ class AreaMap(val pos: Vec3i, var colors: ByteArray) {
 	}
 
 	fun isEmpty(): Boolean {
-		return colors.reduce { b, c -> b or c } and 0b11_11_11_00.toByte() == 0.toByte()
+		synchronized(colors) {
+			return colors.reduce { b, c -> b or c } and 0b11_11_11_00.toByte() == 0.toByte()
+		}
 	}
 }
 

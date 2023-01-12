@@ -1,12 +1,9 @@
 package here.lenrik.chili_map.mixin.client;
 
-import here.lenrik.chili_map.ChilliMap;
-import here.lenrik.chili_map.client.ChilliMapClient;
+import here.lenrik.chili_map.client.ChiliMapClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket;
 import org.spongepowered.asm.mixin.Final;
@@ -27,14 +24,14 @@ public class ClientPlayNetworkHandlerMixin {
 			at = @At("TAIL")
 	)
 	private void joinInjector(GameJoinS2CPacket packet, CallbackInfo info){
-		ChilliMapClient.Companion.onJoined(connection);
+		ChiliMapClient.Companion.onJoined(connection);
 	} // /kill @e[type=item]
 
 //	@Inject(
 //			method = "onDisconnected",
 //			at = @At("RETURN")
 //	) private void disconnectInjector(Text reason, CallbackInfo info){
-//		ChilliMap.LOGGER.info("disconnected!");
+//		ChiliMap.LOGGER.info("disconnected!");
 //		ChilliMapClient.mapContainer.save();
 //		ChilliMapClient.minimapRenderer.clearStateTextures();
 //	}

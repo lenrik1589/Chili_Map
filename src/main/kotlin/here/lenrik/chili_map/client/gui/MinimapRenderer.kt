@@ -1,26 +1,23 @@
-package here.lenrik.chili_map.client
+package here.lenrik.chili_map.client.gui
 
+import com.mojang.blaze3d.systems.RenderSystem
 import here.lenrik.chili_map.Vec2i
-import here.lenrik.chili_map.client.ChilliMapClient.Companion.minimapMode
-import here.lenrik.chili_map.client.ChilliMapClient.Companion.zoom
-import here.lenrik.chili_map.client.RenderHelper.Companion.MAP_ICONS_RENDER_LAYER
+import here.lenrik.chili_map.client.ChiliMapClient
+import here.lenrik.chili_map.client.config.ChiliMapClientConfig
+import here.lenrik.chili_map.client.gui.screens.WorldMapScreen
 import here.lenrik.chili_map.map.AreaMap
 import here.lenrik.chili_map.map.MapMarker
-import here.lenrik.chili_map.map.MapMarker.Type.OTHER
-import here.lenrik.chili_map.map.MapMarker.Type.SELF
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.block.MapColor
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawableHelper
-import net.minecraft.client.render.RenderLayer
-import net.minecraft.client.render.VertexConsumer
-import net.minecraft.client.render.VertexConsumerProvider
+import net.minecraft.client.render.*
 import net.minecraft.client.texture.NativeImageBackedTexture
 import net.minecraft.client.texture.TextureManager
 import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.entity.Entity
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3f
@@ -29,8 +26,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
 
 @Environment(EnvType.CLIENT)
 class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
@@ -57,14 +52,18 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 		mapTextures.clear()
 	}
 
-	fun drawMinimap(matrices: MatrixStack) {
+	fun drawMinimap(matrices: MatrixStack, tickDelta: Float) {
 		val client = MinecraftClient.getInstance()
-		val level = ChilliMapClient.container!!.getLevel(MinecraftClient.getInstance().world!!.registryKey.value)
+		val world = MinecraftClient.getInstance().world!!
+		val level = ChiliMapClient.container!!.getLevel(world.registryKey.value)
 
 		if(!client.options.debugEnabled) {
 			client.gameRenderer.lightmapTextureManager.disable()
 			matrices.push()
 			matrices.translate(10.0, 10.0, .0)
+			matrices.scale((1f / client.window.scaleFactor).toFloat(), (1f / client.window.scaleFactor).toFloat(), 1F)
+			matrices.scale(ChiliMapClient.config.minimapScale.toFloat(), ChiliMapClient.config.minimapScale.toFloat(), 0F)
+
 			val consumerProviders = client.bufferBuilders.entityVertexConsumers as VertexConsumerProvider.Immediate
 			val backgroundConsumer: VertexConsumer = consumerProviders.getBuffer(MAP_BACKGROUND_CHECKERBOARD)
 			val matrix4f = matrices.peek().model
@@ -74,34 +73,30 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 			backgroundConsumer.vertex(matrix4f, br, br, -1.0f).color(255, 255, 255, 255).texture(1.0f, 1.0f).light(255).next()
 			backgroundConsumer.vertex(matrix4f, br, tl, -1.0f).color(255, 255, 255, 255).texture(1.0f, 0.0f).light(255).next()
 			backgroundConsumer.vertex(matrix4f, tl, tl, -1.0f).color(255, 255, 255, 255).texture(0.0f, 0.0f).light(255).next()
-			when (minimapMode) {
-				ChilliMapClient.MinimapMode.SingleMap -> {
-					val map = level.getMap(client.player!!.pos, zoom)
-					val texture = ChilliMapClient.renderer.getMapTexture(map)
+			val minimapZoom = 1 shl ChiliMapClient.config.minimapZoom
+			val side = 128 * minimapZoom
+			val mapFocusPos = when(ChiliMapClient.config.minimapMode) {
+				ChiliMapClientConfig.MinimapMode.SingleMap, ChiliMapClientConfig.MinimapMode.Centered -> {
+					client.player?.pos?.add(client.player?.velocity?.multiply(tickDelta + .0))!!
+				}
+				ChiliMapClientConfig.MinimapMode.Static                                               -> {
+					if(WorldMapScreen.hasPos) WorldMapScreen.lastPos else client.player!!.pos.also { WorldMapScreen.lastPos = client.player!!.pos }
+				}
+			}
+			when (ChiliMapClient.config.minimapMode) {
+				ChiliMapClientConfig.MinimapMode.SingleMap -> {
+					val map = level.getMap(mapFocusPos, minimapZoom)
+					val texture = ChiliMapClient.renderer.getMapTexture(map)
 					texture.updateIfNeeded()
 					texture.draw(matrices, consumerProviders)
 					consumerProviders.drawCurrentLayer()
 					with(AreaMap.toTopLeftCorner(map.pos)) {
 						with(Vec2i(this.x.toInt(), this.z.toInt())) {
-							val to = this + Vec2i(128 shl zoom, 128 shl zoom)
+							val to = this + Vec2i(side, side)
 							matrices.push()
 							matrices.translate(-this.x.toDouble(), -this.y.toDouble(), .0)
 							val vertexConsumer: VertexConsumer = consumerProviders.getBuffer(MAP_ICONS_RENDER_LAYER)
-							ChilliMapClient.container!!.getMarkers(this, to).also {
-								it.addAll(MinecraftClient.getInstance().world!!.players.filter { player ->
-									player.x >= this.x && player.x < to.x && player.z >= this.y && player.z < to.y
-								}.map<PlayerEntity, MapMarker> { player ->
-									val rotation = ((player.yaw + (if(player.yaw < 0) -8 else +8)) / 22.5).toInt()
-									MapMarker(
-										if(player == MinecraftClient.getInstance().player!!) SELF else OTHER,
-										with(
-											(Vec2i(floor(player.x).toInt(), floor(player.z).toInt()) - this) * Vec2i(128, 128) / (to - this) + this
-										) { Vec3i(this.x.toDouble(), player.y, this.y.toDouble()) },
-//								Vec3i(player.x, player.y, player.z),
-										rotation.toFloat()
-									)
-								})
-							}.forEach {
+							level.getMarkers(this, to, world.entities).forEach {
 								val b: Int = it.type.id
 								val g = (b % 16 + 0).toFloat() / 16.0f
 								val h = (b / 16 + 0).toFloat() / 16.0f
@@ -109,7 +104,7 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 								val m = (b / 16 + 1).toFloat() / 16.0f
 								matrices.translate(.0, .0, -0.001)
 								matrices.push()
-								matrices.translate(it.pos.x.toDouble(), it.pos.z.toDouble(), .0)
+								matrices.translate(it.pos.x, it.pos.z, .0)
 								matrices.scale(4.0f, 4.0f, 3.0f)
 								matrices.translate(0.125, 0.125, 0.0)
 								matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(it.rotation * 22.5f))
@@ -125,51 +120,92 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 							matrices.pop()
 						}
 					}
+
 				}
-				ChilliMapClient.MinimapMode.Centered -> {
+
+				ChiliMapClientConfig.MinimapMode.Centered, ChiliMapClientConfig.MinimapMode.Static -> {
 					val maps = mutableListOf<AreaMap>()
 					for(i in 0..8) {
-						val map = level.getMap(client.player!!.pos.add(Vec3d((i % 3 - 1) * 64.0001/* - 64*/, .0, (i / 3 - 1) * 64.0001/* - 64*/)), zoom)
+						val map = level.getMap(mapFocusPos.add(
+							Vec3d(
+								(i % 3 - 1) * (side / 2 + .0001),
+								.0,
+								(i / 3 - 1) * (side / 2 + .0001)
+							)
+						), ChiliMapClient.config.minimapZoom)
 						if(map !in maps) maps.add(map)
 					}
+					consumerProviders.drawCurrentLayer()
+					RenderSystem.enableScissor(
+						(10 * client.window.scaleFactor).toInt(),
+						(client.window.height - 138 * client.window.scaleFactor).toInt(),
+						(128 * client.window.scaleFactor).toInt(),
+						(128 * client.window.scaleFactor).toInt()
+					)
 					for(map in maps) {
-						val topLeftAreaCorner = Vec2i(
-							map.pos.x * 128,
-							map.pos.y * 128
-						)
-						val bottomRightAreaCorner = Vec2i(
-							(map.pos.x + 1) * 128,
-							(map.pos.y + 1) * 128
-						)
-						val texture = ChilliMapClient.renderer.getMapTexture(map)
+						val texture = ChiliMapClient.renderer.getMapTexture(map)
 						texture.updateIfNeeded()
+						val x = 64 + map.pos.x * 128 - (mapFocusPos.x + 64).div(minimapZoom).toFloat()
+						val y = 64 + map.pos.y * 128 - (mapFocusPos.z + 64).div(minimapZoom).toFloat()
 						texture.draw(
-							matrices,
-							consumerProviders,
-							max(0.0, topLeftAreaCorner.x - client.player!!.pos.x).toFloat(),
-							max(0.0, topLeftAreaCorner.y - client.player!!.pos.z).toFloat(),
-							min(128.0, bottomRightAreaCorner.x - client.player!!.pos.x).toFloat(),
-							min(128.0, bottomRightAreaCorner.y - client.player!!.pos.z).toFloat(),
-							max(0.05, client.player!!.pos.x - topLeftAreaCorner.x).toFloat() / 128,
-							max(0.05, client.player!!.pos.z - topLeftAreaCorner.y).toFloat() / 128,
-							min(127.95, client.player!!.pos.x - topLeftAreaCorner.x + 128).toFloat() / 128,
-							min(127.95, client.player!!.pos.z - topLeftAreaCorner.y + 128).toFloat() / 128
+							matrices, consumerProviders,
+							0f + x,
+							0f + y,
+							128f + x,
+							128f + y
 						)
+						consumerProviders.drawCurrentLayer()
 //						break
 					}
-					consumerProviders.drawCurrentLayer()
+					val from = mapFocusPos.add((-side / 2).toDouble(), .0, (-side / 2).toDouble())
+					with(Vec2i(from.x.toInt(), from.z.toInt())) {
+						val to = this + Vec2i(side, side)
+						matrices.push()
+						matrices.translate(-from.x, -from.z, .0)
+						val vertexConsumer: VertexConsumer = consumerProviders.getBuffer(MAP_ICONS_RENDER_LAYER)
+						level.getMarkers(this, to, world.entities).forEach {
+							val b: Int = it.type.id
+							val g = (b % 16 + 0).toFloat() / 16.0f
+							val h = (b / 16 + 0).toFloat() / 16.0f
+							val l = (b % 16 + 1).toFloat() / 16.0f
+							val m = (b / 16 + 1).toFloat() / 16.0f
+							matrices.translate(.0, .0, -0.001)
+							matrices.push()
+							matrices.translate(it.pos.x, it.pos.z, .0)
+							matrices.push()
+							matrices.scale(4.0f, 4.0f, 3.0f)
+							matrices.translate(0.125, 0.125, 0.0)
+							matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(it.rotation * 22.5f))
+							matrices.translate(-0.125, 0.125, 0.0)
+							val model = matrices.peek().model
+							vertexConsumer.vertex(model, -1f, +1f, 0f).color(255, 255, 255, 255).texture(g, h).light(255).next()
+							vertexConsumer.vertex(model, +1f, +1f, 0f).color(255, 255, 255, 255).texture(l, h).light(255).next()
+							vertexConsumer.vertex(model, +1f, -1f, 0f).color(255, 255, 255, 255).texture(l, m).light(255).next()
+							vertexConsumer.vertex(model, -1f, -1f, 0f).color(255, 255, 255, 255).texture(g, m).light(255).next()
+							matrices.pop()
+							if(ChiliMapClient.renderedPlayerList) {
+								matrices.translate(.0, 4.0, .0)
+								drawCenteredText(matrices, client.textRenderer, it.name, 0, 0, 0xffffff)
+							}
+							matrices.pop()
+						}
+						consumerProviders.drawCurrentLayer()
+						matrices.pop()
+					}
+					RenderSystem.disableScissor()
 				}
 			}
 			matrices.pop()
 			client.gameRenderer.lightmapTextureManager.enable()
 		}
-		if(ChilliMapClient.autoSaveCounter >= 3000) {
-			ChilliMapClient.autoSaveCounter -= 1000
-			ChilliMapClient.container!!.save(autoSave = true)
+		if(ChiliMapClient.autoSaveCounter >= (2 * 60 + 30) * 20) {
+			ChiliMapClient.autoSaveCounter -= 50 * 20
+			ChiliMapClient.container!!.save(autoSave = true)
 		}
+		ChiliMapClient.renderedPlayerList = false
 	}
 
-	@Environment(EnvType.CLIENT)
+	//	@Environment(EnvType.CLIENT)
 	inner class MapTexture(val map: AreaMap) : AutoCloseable {
 		private var texture: NativeImageBackedTexture =
 			NativeImageBackedTexture(DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, true)
@@ -227,4 +263,6 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 			texture.close()
 		}
 	}
+
 }
+

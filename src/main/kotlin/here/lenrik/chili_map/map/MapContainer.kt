@@ -1,6 +1,6 @@
 package here.lenrik.chili_map.map
 
-import here.lenrik.chili_map.Vec2i
+import here.lenrik.chili_map.client.compat.CompatHelper
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.nbt.NbtIo
@@ -16,7 +16,6 @@ data class MapContainer(var name: Text, val savePath: Path) {
 	constructor(name: String, savePath: Path) : this(Text.of(name), savePath)
 
 	private val levels: HashMap<Identifier, LevelMap> = HashMap(4)
-	private val markers = mutableListOf<MapMarker>()
 	private val createdAt: Long
 
 	init {
@@ -28,7 +27,9 @@ data class MapContainer(var name: Text, val savePath: Path) {
 	fun getLevel(value: Identifier): LevelMap {
 		return levels.compute(
 			value
-		) { identifier, levelMap -> levelMap ?: LevelMap(identifier, name.copy() + "/" + identifier.toString()) }!!
+		) { identifier, levelMap -> levelMap ?: LevelMap(identifier, name.copy() + "/" + identifier.toString()).apply {
+			workerThread.start()
+		} }!!
 	}
 
 	fun save(autoSave: Boolean = false) {
@@ -57,7 +58,13 @@ data class MapContainer(var name: Text, val savePath: Path) {
 		if ("levels" in data) {
 			for (levelNbt in data["levels"] as NbtList) {
 				levelNbt as NbtCompound
-				LevelMap(Identifier(levelNbt.getString("id")), Text.of(levelNbt.getString("name"))).apply {
+				LevelMap(
+					Identifier(levelNbt.getString("id")),
+					CompatHelper.tries(
+						{ Text.Serializer.fromJson(levelNbt.getString("name"))!! },
+						or = Text.of(levelNbt.getString("name"))
+					)
+				).apply {
 					load(
 						savePath.resolve(if (data.getBoolean("autoSave")) "autoSave" else "").resolve(levelNbt.getString("path"))
 					)
@@ -70,47 +77,35 @@ data class MapContainer(var name: Text, val savePath: Path) {
 		val autoSaveData = NbtIo.read(savePath.resolve("autoSave").resolve("properties.nbt").toFile())
 		val saveData = NbtIo.read(savePath.resolve("properties.nbt").toFile())
 		return when {
-			saveData == null && autoSaveData == null -> NbtCompound().apply {
+			saveData == null && autoSaveData == null      -> NbtCompound().apply {
 				this["createTime"] = Instant.now().toEpochMilli()
 				this["name"] = name
 			}
-			(saveData == null) xor (autoSaveData == null) -> (saveData ?: autoSaveData)!!
-			else -> (if (autoSaveData!!.getLong("saveTime") > saveData!!.getLong("saveTime")) autoSaveData else saveData)
-		}
-	}
 
-	fun getMarkers(from: Vec2i, to: Vec2i): MutableList<MapMarker> {
-		return markers.filter {
-			from.x <= it.pos.x && it.pos.x < to.x && from.y <= it.pos.y && it.pos.y < to.y
-		}.toMutableList()
+			(saveData == null) xor (autoSaveData == null) -> (saveData ?: autoSaveData)!!
+			else                                          -> (if (autoSaveData!!.getLong("saveTime") > saveData!!.getLong("saveTime")) autoSaveData else saveData)
+		}
 	}
 
 }
 
 operator fun NbtCompound.set(key: String, value: Any) {
 	when (value) {
-		is Long -> putLong(key, value)
-		is Int -> putInt(key, value)
-		is Short -> putShort(key, value)
-		is Byte -> putByte(key, value)
-		is Boolean -> putBoolean(key, value)
-		is String -> putString(key, value)
-		is UUID -> putUuid(key, value)
-		is LongArray -> putLongArray(key, value)
-		is IntArray -> putIntArray(key, value)
-		is ByteArray -> putByteArray(key, value)
-		is Float -> putFloat(key, value)
-		is Double -> putDouble(key, value)
+		is Long       -> putLong(key, value)
+		is Int        -> putInt(key, value)
+		is Short      -> putShort(key, value)
+		is Byte       -> putByte(key, value)
+		is Boolean    -> putBoolean(key, value)
+		is String     -> putString(key, value)
+		is UUID       -> putUuid(key, value)
+		is LongArray  -> putLongArray(key, value)
+		is IntArray   -> putIntArray(key, value)
+		is ByteArray  -> putByteArray(key, value)
+		is Float      -> putFloat(key, value)
+		is Double     -> putDouble(key, value)
 		is NbtElement -> put(key, value)
-		is Text -> putString(key, with(value) {
-			val builder = StringBuilder()
-			this.visit<Any> { value ->
-				builder.append(value)
-				Optional.empty()
-			}
-			builder.toString()
-		})
-		else -> TODO("Need to figure out how to (de)serialize \"stuff\" ${value.javaClass}")
+		is Text       -> putString(key, Text.Serializer.toJson(value))
+		else          -> TODO("Need to figure out how to (de)serialize \"stuff\" ${value.javaClass}")
 	}
 }
 

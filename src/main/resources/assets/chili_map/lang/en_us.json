@@ -1,0 +1,22 @@
+{
+  "chili_map.config.title": "Chili Map",
+  "chili_map.tab.title.generic": "Generic",
+  "chili_map.tab.title.rendering": "Rendering",
+  "chili_map.tab.title.compat": "Compatibilities",
+  "option.chili_map.key.settings.open": "Open mod settings",
+  "option.chili_map.key.world_map.open": "Open world map",
+  "option.chili_map.key.mini_map.zoom_in": "Zoom in minimap",
+  "option.chili_map.key.mini_map.zoom_out": "Zoom out minimap",
+  "option.chili_map.minimap.scale": "Scale minimap",
+  "option.chili_map.minimap.scale.comment": "Scale",
+  "option.chili_map.minimap.mode": "Minimap display mode.",
+  "option.chili_map.minimap.mode.comment": "Minimap display mode.\nSingle map - shows a map as a filled map would\nCentered - makes map center on the player",
+  "option.chili_map.render.WaterMode": "Water rendering mode.",
+  "option.chili_map.render.WaterMode.comment": "Water rendering mode.\n§6IT IS NOT ADVISED TO USE VANILLA RENDERER NEAR LARGE BODIES OF WATER.§r\nvanilla checks liquid depth with no limit per column of blocks.\nThorough stops after 40 blocks of liquid.\nOptimistic stops after theoretical least (for zoom 0 map) required amount.\nSkip ignores columns of water, just checking the top block.",
+  "option.chili_map.render.MappingMode": "Mapping mode.",
+  "option.chili_map.render.MappingMode.comment": "Render mode to use for the map.\nAll - Renders all chunks rendered by the client.\nVanilla - Renders map as vanilla would - using circular\n    pattern.",
+  "option.chili_map.render.borderRadius": "Border radius",
+  "option.chili_map.render.borderRadius.comment": "Radius from the edge in which map will have checkerboard pattern.\n§6WARNING: Can severely impact performance on higher values.\n§6Radius 512 requires at least 31 chunks of render distance.\n§6Raise at your own risk!\nOn higher values it's better to just use Mapping mode \"All\"§r",
+  "option.chili_map.render.renderDistance": "Render distance",
+  "option.chili_map.render.renderDistance.comment": "Radius of the area rendered in \"Vanilla\" "
+}

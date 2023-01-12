@@ -1,6 +1,6 @@
 package here.lenrik.chili_map.mixin.client;
 
-import here.lenrik.chili_map.client.ChilliMapClient;
+import here.lenrik.chili_map.client.ChiliMapClient;
 import here.lenrik.chili_map.map.MapUpdater;
 import kotlin.NotImplementedError;
 import net.minecraft.client.MinecraftClient;
@@ -36,7 +36,8 @@ abstract class ClientWorldMixin extends World {
 					shift = AFTER
 			)
 	) private void updateMap (CallbackInfo info) {
-		MapUpdater.Companion.updateContainer(this, Objects.requireNonNull(MinecraftClient.getInstance().player));
+
+		MapUpdater.updateContainer(this, Objects.requireNonNull(MinecraftClient.getInstance().player));
 	}
 
 	@Inject(
@@ -45,6 +46,6 @@ abstract class ClientWorldMixin extends World {
 					"RETURN"
 			)
 	) private void onDisconnect (CallbackInfo info) {
-		ChilliMapClient.Companion.saveLoaded();
+		ChiliMapClient.saveLoaded();
 	}
 }

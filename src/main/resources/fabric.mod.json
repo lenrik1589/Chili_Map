@@ -1,0 +1,6 @@
+{
+	"schemaVersion": 1,
+	"mixin": "chili_map.mixins.json",
+	"id": "chili_map",
+	"version": "0.2"
+}

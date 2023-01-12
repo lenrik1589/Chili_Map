@@ -1,8 +1,10 @@
 package here.lenrik.chili_map
 
+import net.minecraft.util.math.Vec3d
 import java.util.*
 
 data class Vec2i(val x: Int, val y: Int) {
+	operator fun Pair<Vec2i, Vec2i>.contains(pos: Vec3d) = first.x <= pos.x && pos.x < second.x && first.y <= pos.z && pos.z < second.y
 
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
