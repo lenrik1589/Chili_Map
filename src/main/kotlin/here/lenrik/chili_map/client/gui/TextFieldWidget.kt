@@ -80,11 +80,10 @@ class TextFieldWidget(
 				if (firstCharacterIndex > textLength) {
 					firstCharacterIndex = textLength
 				}
-				val j = innerWidth
-				val string = textRenderer.trimToWidth(text.substring(firstCharacterIndex), j)
+				val string = textRenderer.trimToWidth(text.substring(firstCharacterIndex), innerWidth)
 				val k = string.length + firstCharacterIndex
 				if (selectionEnd == firstCharacterIndex) {
-					firstCharacterIndex -= textRenderer.trimToWidth(text, j, true).length
+					firstCharacterIndex -= textRenderer.trimToWidth(text, innerWidth, true).length
 				}
 				if (selectionEnd > k) {
 					firstCharacterIndex += selectionEnd - k

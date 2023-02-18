@@ -1,9 +1,8 @@
 plugins {
 	id 'org.ajoberstar.grgit' version '4.1.0'
 	id "maven-publish"
-	alias(libs.plugins.quilt.loom)
-	alias(libs.plugins.kotlin.jvm)
-//	alias(libs.plugins.quilt.flower)
+	id 'org.quiltmc.loom' version '1.0.+'
+	id 'org.jetbrains.kotlin.jvm' version '1.8.10'	
 }
 
 version = project.mod_version
@@ -48,8 +47,8 @@ dependencies {
 	implementation      "org.quiltmc:quiltflower:$quiltflower"
 	implementation      "com.github.LlamaLad7:MixinExtras:0.1.1"
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
-	modImplementation   (libs.malilib) { transitive = false }
-	modImplementation   (libs.fabric.carpet) { transitive = false }
+	modImplementation   ("fi.dy.masa:malilib-fabric:$minecraft-$malilib") { transitive = false }
+	modImplementation   ("com.github.gnembon:fabric-carpet:$carpet") { transitive = false }
 	modImplementation   ("fi.dy.masa:minihud-fabric:$minecraft-$minihud") { transitive = false }
 	modImplementation   ("maven.modrinth:modmenu:$mod_menu") { transitive = false }
 	modImplementation   (include("eu.pb4:placeholder-api:$placeholders")) { transitive = false }
@@ -60,7 +59,7 @@ dependencies {
 
 processResources {
 	filteringCharset "UTF-8"
-
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.withType(JavaCompile).configureEach {
