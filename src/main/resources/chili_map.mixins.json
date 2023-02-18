@@ -13,7 +13,7 @@
     "client.HudMixin",
     "client.MinecraftClientMixin",
     "client.MinecraftServerMixin",
-    "client.PLMixin"
+    "client.PlayerListMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -47,7 +47,7 @@ class CreateWaypointScreen(level: LevelMap, pos: Vec3d) : Screen(TranslatableTex
 		},
 		Literal {
 			override fun <T> validate(input: String): T = try {
-				Text.Serializer.fromJson(input) as T
+				Text.Serializer.fromJson(input) as T	
 			} catch (e: JsonParseException) {
 				throw InvalidInputError(0, type = "Text")
 			}

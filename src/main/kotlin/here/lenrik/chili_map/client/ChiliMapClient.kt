@@ -40,15 +40,17 @@ class ChiliMapClient : ClientModInitializer {
 					manager.addHotkeysForCategory(
 						"ChiliMap",
 						"adsads",
-						ChiliMapClientConfig::class.memberProperties.filter { it.isFinal }
-							.mapNotNull { it.get(config) as? ConfigHotkey })
+						ChiliMapClientConfig::class.memberProperties.filter { it.isFinal }.mapNotNull {
+							it.get(config) as? ConfigHotkey
+						})
 				}
 
 				override fun addKeysToMap(manager: IKeybindManager) =
-					ChiliMapClientConfig::class.memberProperties.filter { it.isFinal }
-						.mapNotNull { it.get(config) as? ConfigHotkey }.forEach {
-							manager.addKeybindToMap(it.keybind)
-						}
+					ChiliMapClientConfig::class.memberProperties.filter { it.isFinal }.mapNotNull {
+						it.get(config) as? ConfigHotkey
+					}.forEach {
+						manager.addKeybindToMap(it.keybind)
+					}
 			})
 			config.openWorldMapKey.keybind.setCallback { _, _ ->
 				client.setScreen(WorldMapScreen(container!!.name))

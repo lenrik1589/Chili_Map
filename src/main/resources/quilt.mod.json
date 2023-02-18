@@ -6,12 +6,10 @@
       {
         "id": "quilt_loader",
         "versions": ">=0.16.0-beta.7"
-      },
-      {
+      }, {
         "id": "minecraft",
         "versions": ">=1.18.2"
-      },
-      {
+      }, {
         "id": "malilib",
         "versions": ">=0.10"
       }
@@ -36,9 +34,6 @@
       ],
       "client_init": [
         "here.lenrik.chili_map.client.ChiliMapClient"
-      ],
-      "server_init": [
-        "here.lenrik.chili_map.server.ChiliMapServer"
       ],
       "modmenu": [
         "here.lenrik.chili_map.client.compat.modmenu.ChiliMapModMenuCompat"

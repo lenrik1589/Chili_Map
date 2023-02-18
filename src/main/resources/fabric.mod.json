@@ -2,5 +2,21 @@
 	"schemaVersion": 1,
 	"mixin": "chili_map.mixins.json",
 	"id": "chili_map",
-	"version": "0.2"
+	"version": "0.2",
+	"entrypoints": {
+		"main": [
+			"here.lenrik.chili_map.ChiliMap"
+		],
+		"client": [
+			"here.lenrik.chili_map.client.ChiliMapClient"
+		],
+		"modmenu": [
+			"here.lenrik.chili_map.client.compat.modmenu.ChiliMapModMenuCompat"
+		]
+	},
+	"depends": {
+		"minecraft": ">=1.18.2",
+		"malilib": ">=0.10",
+		"fabric_loader": "*"
+	}
 }

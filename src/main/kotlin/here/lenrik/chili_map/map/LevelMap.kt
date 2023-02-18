@@ -386,11 +386,9 @@ data class LevelMap(val levelId: Identifier, val name: Text) {
 	}
 
 	fun getMarkers(from: Vec2i, to: Vec2i, entities: Iterable<Entity> = listOf(), remapPos: Boolean = true): MutableList<MapMarker> {
-		return (markers.filter {
-			it.pos in (from to to)
-		} + entities.filter {
+		return (entities.filter {
 			it is LivingEntity && it.pos in (from to to)
-		}.map {
+		}.sortedWith { e1, e2 -> (if(e2 is PlayerEntity) 1 else 0) - if(e1 is PlayerEntity) 1 else 0 }.map {
 			val rotation = ((it.yaw + (if(it.yaw < 0) -8 else +8)) / 22.5).toInt()
 			MapMarker(
 				when (it) {
@@ -403,6 +401,8 @@ data class LevelMap(val levelId: Identifier, val name: Text) {
 				rotation.toFloat(),
 				(if(it.hasCustomName()) it.customName else it.name)?.copy()
 			)
+		} + markers.filter {
+			it.pos in (from to to)
 		}).toMutableList()
 	}
 

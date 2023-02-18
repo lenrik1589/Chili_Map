@@ -13,6 +13,6 @@ public class RegistryKeyHasher{
 	@Shadow @Final private Identifier value;
 
 	public int hashCode( ){
-		return registry.hashCode() * 31 + value.hashCode();
+		return 31 * registry.hashCode() + value.hashCode();
 	}
 }

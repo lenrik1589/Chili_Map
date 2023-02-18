@@ -40,7 +40,15 @@ class ChiliMapClientConfig : IConfigHandler {
 		Skip(0)
 	}
 
-	// -------------------------------------------------------------------------
+	// -------------------- General Options ------------------------------------
+	
+	val openSettingsKey = ConfigHotkey("option.chili_map.key.settings.open", "N,C", "key.categories.gameplay")
+	val openWorldMapKey = ConfigHotkey("option.chili_map.key.world_map.open", "N", RELEASE_CANCEL, "key.categories.gameplay")
+	val zoomInKey = ConfigHotkey("option.chili_map.key.mini_map.zoom_in", "", "key.categories.gameplay")
+	val zoomOutKey = ConfigHotkey("option.chili_map.key.mini_map.zoom_out", "", "key.categories.gameplay")
+	val createWaypointKey = ConfigHotkey("option.chili_map.key.waypoint.create", "", "key.categories.gameplay")
+
+	// -------------------- Rendering Options ----------------------------------
 
 	val mappingModeOption = ConfigEnum(MappingMode::class.java, prefix = "option.chili_map.render.")
 	val minimapModeOption = ConfigEnum(MinimapMode::class.java, name = "option.chili_map.minimap.mode")
@@ -48,13 +56,9 @@ class ChiliMapClientConfig : IConfigHandler {
 
 	val baseRenderDistanceOption = ConfigInteger("option.chili_map.render.renderDistance", 128, 0, 512, "option.chili_map.render.renderDistance.comment")
 	val borderRadiusOption = ConfigInteger("option.chili_map.render.borderRadius", 2, 0, 32, "option.chili_map.render.borderRadius.comment")
-	val minimapScaleOption = ConfigDouble("option.chili_map.minimap.scale", 2.0, 0.0, 5.0, "option.chili_map.minimap.scale.comment")
+	val minimapScaleOption = ConfigDouble("option.chili_map.minimap.scale", 2.0, 0.1, 5.0, "option.chili_map.minimap.scale.comment")
 
-	val openSettingsKey = ConfigHotkey("option.chili_map.key.settings.open", "N,C", "key.categories.gameplay")
-	val openWorldMapKey = ConfigHotkey("option.chili_map.key.world_map.open", "N", RELEASE_CANCEL, "key.categories.gameplay")
-	val zoomInKey = ConfigHotkey("option.chili_map.key.mini_map.zoom_in", "", "key.categories.gameplay")
-	val zoomOutKey = ConfigHotkey("option.chili_map.key.mini_map.zoom_out", "", "key.categories.gameplay")
-	val createWaypointKey = ConfigHotkey("option.chili_map.key.waypoint.create", "", "key.categories.gameplay")
+	// -------------------- Compatibility Options ------------------------------
 
 	val chunkDebugCompatMapOverlayOption = ConfigBoolean("option.chili_map.chunkDebugCompatMapOverlayOption", false, "option.chili_map.chunkDebugCompatMapOverlayOption.comment")
 

@@ -2,13 +2,13 @@ package here.lenrik.chili_map.client.gui
 
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.Drawable
 import net.minecraft.client.gui.Element
 import net.minecraft.client.gui.screen.Screen
+import net.minecraft.client.gui.screen.Screen.hasShiftDown
+import net.minecraft.client.gui.screen.Screen.isSelectAll
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
 import net.minecraft.client.gui.screen.narration.NarrationPart
 import net.minecraft.client.gui.widget.ClickableWidget
@@ -20,6 +20,7 @@ import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.text.*
 import net.minecraft.util.Util
 import net.minecraft.util.math.MathHelper
+import org.quiltmc.loader.api.minecraft.ClientOnly
 import java.util.*
 import java.util.function.BiFunction
 import java.util.function.Consumer
@@ -29,7 +30,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Suppress("SameParameterValue", "NAME_SHADOWING")
-@Environment(EnvType.CLIENT)
+@ClientOnly
 class TextFieldWidget(
 	private val textRenderer: TextRenderer?,
 	x: Int,
@@ -101,7 +102,7 @@ class TextFieldWidget(
 	var textPredicate = Predicate(Objects::nonNull)
 
 	var renderTextProvider = BiFunction { string: String, _: Int ->
-		OrderedText.styledForwardsVisitedString(string, Style.EMPTY)
+		OrderedText.forward(string, Style.EMPTY)
 	}
 
 	init {
@@ -130,9 +131,7 @@ class TextFieldWidget(
 		val j = max(selectionStart, selectionEnd)
 		val k = maxLength - this.text.length - (i - j)
 		var string = buildString {
-			text.forEach {
-				if (isValid(it)) append(it)
-			}
+			text.filter(::isValid).forEach(this::append)
 		}
 		var l = string.length
 		if (k < l) {
@@ -247,8 +246,8 @@ class TextFieldWidget(
 		return if (!isActive) {
 			false
 		} else {
-			selecting = Screen.hasShiftDown()
-			if (Screen.isSelectAll(keyCode)) {
+			selecting = hasShiftDown()
+			if (isSelectAll(keyCode)) {
 				setCursorToEnd()
 				selectionEnd = 0
 				true
@@ -268,55 +267,37 @@ class TextFieldWidget(
 				true
 			} else {
 				when (keyCode) {
-					259                     -> {
-						if (isEditable) {
-							selecting = false
-							erase(-1)
-							selecting = Screen.hasShiftDown()
-						}
-						true
+					259  -> if (isEditable) {
+						selecting = false
+						erase(-1)
+						selecting = hasShiftDown()
 					}
 
-					260, 264, 265, 266, 267 -> false
-					261                     -> {
-						if (isEditable) {
-							selecting = false
-							erase(1)
-							selecting = Screen.hasShiftDown()
-						}
-						true
+					261  -> if (isEditable) {
+						selecting = false
+						erase(1)
+						selecting = hasShiftDown()
 					}
 
-					262                     -> {
-						if (Screen.hasControlDown()) {
-							cursor = this.getWordSkipPosition(1)
-						} else {
-							moveCursor(1)
-						}
-						true
+					262  -> if (Screen.hasControlDown()) {
+						cursor = this.getWordSkipPosition(1)
+					} else {
+						moveCursor(1)
 					}
 
-					263                     -> {
-						if (Screen.hasControlDown()) {
-							cursor = this.getWordSkipPosition(-1)
-						} else {
-							moveCursor(-1)
-						}
-						true
+					263  -> if (Screen.hasControlDown()) {
+						cursor = this.getWordSkipPosition(-1)
+					} else {
+						moveCursor(-1)
 					}
 
-					268                     -> {
-						setCursorToStart()
-						true
-					}
+					268  -> setCursorToStart()
 
-					269                     -> {
-						setCursorToEnd()
-						true
-					}
+					269  -> setCursorToEnd()
 
-					else                    -> false
+					else -> return false
 				}
+				return true
 			}
 		}
 	}

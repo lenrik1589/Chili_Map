@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerListHud.class)
-public class PLMixin {
+public class PlayerListMixin {
 	@Inject(method = "render", at = @At("HEAD")) private void n(MatrixStack matrices, int scaledWindowWidth, Scoreboard scoreboard, ScoreboardObjective objective, CallbackInfo info){
 		ChiliMapClient.setRenderedPlayerList(true);
 	}
