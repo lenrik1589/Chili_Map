@@ -28,4 +28,4 @@ pluginManagement {
 	}
 }
 
-enableFeaturePreview('VERSION_CATALOGS')
+include(":common", ":quilt", ":fabric")

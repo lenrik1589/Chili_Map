@@ -72,4 +72,3 @@ class ChiliMapConfigScreen(previous: Screen?) : GuiConfigsBase(10, 50, ChiliMap.
 		ChiliMapClient.config.save()
 	}
 }
-// /usr/lib/jvm/default/bin/java -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:37185,suspend=y,server=n -Dfabric.dli.config=/projects/minecraft/chilli_map/.gradle/loom-cache/launch.cfg -Dfabric.dli.env=server -Dfabric.dli.main=net.fabricmc.loader.launch.knot.KnotServer net.fabricmc.devlaunchinjector.Main nogui
