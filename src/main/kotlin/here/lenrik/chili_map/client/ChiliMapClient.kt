@@ -15,22 +15,23 @@ import here.lenrik.chili_map.client.gui.MinimapRenderer
 import here.lenrik.chili_map.client.gui.screens.CreateWaypointScreen
 import here.lenrik.chili_map.client.gui.screens.WorldMapScreen
 import here.lenrik.chili_map.map.MapContainer
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
+import here.lenrik.chili_map.mixin.client.SessionAccessor
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.texture.TextureManager
 import net.minecraft.network.ClientConnection
 import net.minecraft.resource.ResourceManager
 import net.minecraft.util.math.Vec3d
 import org.quiltmc.loader.api.ModContainer
+import org.quiltmc.loader.api.minecraft.ClientOnly
 import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer
+import org.quiltmc.qsl.lifecycle.api.client.event.ClientLifecycleEvents
 import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking
 import java.nio.file.Path
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.full.memberProperties
 
-@Environment(EnvType.CLIENT)
+@ClientOnly
 class ChiliMapClient : ClientModInitializer {
 	override fun onInitializeClient(mod: ModContainer) {
 		InitializationHandler.getInstance().registerInitializationHandler {
@@ -79,6 +80,9 @@ class ChiliMapClient : ClientModInitializer {
 				)
 				true
 			}
+		}
+		ClientLifecycleEvents.READY.register {
+			renderer = MinimapRenderer(it.textureManager)
 		}
 		var counter = 0
 		ClientPlayNetworking.registerGlobalReceiver(ServerPlayerLocationPacket.CHANNEL) { _, _, buf, _ ->

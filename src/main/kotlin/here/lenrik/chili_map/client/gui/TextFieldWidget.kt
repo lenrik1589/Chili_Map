@@ -2,6 +2,9 @@ package here.lenrik.chili_map.client.gui
 
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.Tessellator
+import com.mojang.blaze3d.vertex.VertexFormat
+import com.mojang.blaze3d.vertex.VertexFormats
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.Drawable
@@ -11,11 +14,8 @@ import net.minecraft.client.gui.screen.Screen.hasShiftDown
 import net.minecraft.client.gui.screen.Screen.isSelectAll
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
 import net.minecraft.client.gui.screen.narration.NarrationPart
-import net.minecraft.client.gui.widget.ClickableWidget
+import net.minecraft.client.gui.widget.TextWidget
 import net.minecraft.client.render.GameRenderer
-import net.minecraft.client.render.Tessellator
-import net.minecraft.client.render.VertexFormat
-import net.minecraft.client.render.VertexFormats
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.text.*
 import net.minecraft.util.Util
@@ -32,14 +32,14 @@ import kotlin.math.min
 @Suppress("SameParameterValue", "NAME_SHADOWING")
 @ClientOnly
 class TextFieldWidget(
-	private val textRenderer: TextRenderer?,
+	textRenderer: TextRenderer?,
 	x: Int,
 	y: Int,
 	width: Int,
 	height: Int,
 	startingMessage: Text?,
 	copyFrom: TextFieldWidget? = null
-) : ClickableWidget(x, y, width, height, startingMessage), Drawable, Element {
+) : TextWidget(x, y, width, height, startingMessage, textRenderer), Drawable, Element {
 	var text = ""
 		set(text) {
 			if (textPredicate.test(text)) {
@@ -115,7 +115,10 @@ class TextFieldWidget(
 		++focusedTicks
 	}
 
-	override fun getNarrationMessage() = TranslatableText("gui.narrate.editBox", message, this.text)
+	override fun updateNarration(builder: NarrationMessageBuilder) {
+		builder.put(NarrationPart.TITLE, Text.translatable("narration.edit_box", text))
+		builder.put(NarrationPart.HINT, Text.translatable("gui.narrate.editBox", message, this.text))
+	}
 
 	val selectedText: String
 		get() {
@@ -340,7 +343,7 @@ class TextFieldWidget(
 		}
 	}
 
-	override fun renderButton(matrices: MatrixStack, mouseX: Int, mouseY: Int, delta: Float) {
+	override fun drawWidget(matrices: MatrixStack, mouseX: Int, mouseY: Int, delta: Float) {
 		if (isVisible) {
 			if (drawsBackground()) {
 				val borderColor = if (this.isFocused) BORDER_COLOR_FOCUSED else BORDER_COLOR
@@ -413,10 +416,10 @@ class TextFieldWidget(
 			x1 = this.x + width
 		}
 		val tessellator = Tessellator.getInstance()
-		val bufferBuilder = tessellator.buffer
+		val bufferBuilder = tessellator.bufferBuilder
 		RenderSystem.setShader { GameRenderer.getPositionShader() }
 		RenderSystem.setShaderColor(0.0f, 0.0f, 1.0f, 1.0f)
-		RenderSystem.disableTexture()
+//		RenderSystem.disableTexture()
 		RenderSystem.enableColorLogicOp()
 		RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE)
 		bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION)
@@ -427,7 +430,7 @@ class TextFieldWidget(
 		tessellator.draw()
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f)
 		RenderSystem.disableColorLogicOp()
-		RenderSystem.enableTexture()
+//		RenderSystem.enableTexture()
 	}
 
 
@@ -446,15 +449,17 @@ class TextFieldWidget(
 		return drawsBackground
 	}
 
-	override fun changeFocus(lookForwards: Boolean): Boolean {
-		return visible && isEditable && super<ClickableWidget>.changeFocus(lookForwards)
-	}
+//	override
+//	
+//	override fun setFocuseda(focused: Boolean): Unit {
+//		return visible && isEditable && super.setFocused(lookForwards)
+//	}
 
 	override fun isMouseOver(mouseX: Double, mouseY: Double): Boolean {
 		return visible && mouseX >= this.x.toDouble() && mouseX < (this.x + width).toDouble() && mouseY >= y.toDouble() && mouseY < (y + height).toDouble()
 	}
 
-	override fun onFocusedChanged(newFocused: Boolean) {
+	override fun setFocused(newFocused: Boolean) {
 		if (newFocused) {
 			focusedTicks = 0
 		}
@@ -472,16 +477,6 @@ class TextFieldWidget(
 
 	fun getCharacterX(index: Int): Int {
 		return if (index > text.length) this.x else this.x + textRenderer!!.getWidth(text.substring(0, index))
-	}
-
-	var x: Int
-		get() = super.x
-		set(x) {
-			this.x = x
-		}
-
-	override fun appendNarrations(builder: NarrationMessageBuilder) {
-		builder.put(NarrationPart.TITLE, TranslatableText("narration.edit_box", text))
 	}
 
 	companion object {

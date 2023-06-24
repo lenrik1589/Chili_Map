@@ -58,7 +58,7 @@ data class LevelMap(val levelId: Identifier, val name: Text) {
 	val dirtColor: MapColor = Blocks.DIRT.defaultState.getMapColor(null, BlockPos.ORIGIN)
 	val stoneColor: MapColor = Blocks.STONE.defaultState.getMapColor(null, BlockPos.ORIGIN)
 	val queue: ConcurrentLinkedQueue<Pair<World, PlayerEntity>> = Queues.newConcurrentLinkedQueue()
-	val workerThread = thread(true, name = "Map Update Thread") {
+	val workerThread = thread(start = true, isDaemon = true, name = "Map Update Thread") {
 		while (!stop) {
 			when (queue.size) {
 				0    -> Thread.sleep(25)
@@ -278,7 +278,7 @@ data class LevelMap(val levelId: Identifier, val name: Text) {
 
 					ChiliMapClientConfig.MappingMode.All     -> {
 						val center = player.chunkPos
-						val chunkDistance = MinecraftClient.getInstance().options.viewDistance
+						val chunkDistance = MinecraftClient.getInstance().options.viewDistance.get()
 
 						exit@ for (chunkX in center.x - chunkDistance..center.x + chunkDistance) {
 							if ((updateTracker xor chunkX) and 0xf == 0) {

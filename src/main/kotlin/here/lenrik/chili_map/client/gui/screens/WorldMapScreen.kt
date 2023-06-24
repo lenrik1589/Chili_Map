@@ -1,5 +1,7 @@
 package here.lenrik.chili_map.client.gui.screens
 
+import com.mojang.blaze3d.vertex.VertexConsumer
+import here.lenrik.chili_map.ChiliMap
 import here.lenrik.chili_map.Vec2i
 import here.lenrik.chili_map.client.ChiliMapClient
 import here.lenrik.chili_map.client.gui.MAP_ICONS_RENDER_LAYER
@@ -7,13 +9,12 @@ import here.lenrik.chili_map.map.AreaMap
 import here.lenrik.chili_map.map.LevelMap
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.render.VertexConsumer
 import net.minecraft.client.render.VertexConsumerProvider
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import net.minecraft.util.math.Axis
 import net.minecraft.util.math.Vec3d
-import net.minecraft.util.math.Vec3f
 import net.minecraft.util.math.Vec3i
 import org.lwjgl.glfw.GLFW
 import kotlin.math.log2
@@ -157,7 +158,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 							fill(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7fFF7f7F)
 							fill(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7fFF7f7F)
 							matrices.push()
-							matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(90f))
+							matrices.multiply(Axis.Z_POSITIVE.rotationDegrees(90f))
 							matrices.translate(.0, .0 - i, .0)
 							fill(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7fFF7f7F)
 							fill(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7fFF7f7F)
@@ -197,7 +198,7 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 					fillGradient(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7f00FF00, 0x7f7fFF7F)
 					fillGradient(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7f7fFF7F, 0x7fFFffFF)
 					matrices.push()
-					matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(90f))
+					matrices.multiply(Axis.Z_POSITIVE.rotationDegrees(90f))
 					matrices.translate(.0, .0 - i, .0)
 					fillGradient(matrices, 0 + 0, 1 + 0, 1 + 0, i + 0, 0x7f7fFF7F, 0x7f00FF00)
 					fillGradient(matrices, i - 1, 0 + 0, i + 0, i - 1, 0x7fFFffFF, 0x7f7fFF7F)
@@ -227,14 +228,14 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 				.0)
 			matrices.scale(4.0f, 4.0f, 3.0f)
 			matrices.translate(0.125, 0.125, 0.0)
-			matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(it.rotation * 22.5f))
+			matrices.multiply(Axis.Z_POSITIVE.rotationDegrees(it.rotation * 22.5f))
 			matrices.translate(-0.125, 0.125, 0.0)
 			matrices.scale(iconScale, iconScale, iconScale)
 			val model = matrices.peek().model
-			vertexConsumer.vertex(model, -1f, +1f, 0f).color(255, 255, 255, 255).texture(g, h).light(255).next()
-			vertexConsumer.vertex(model, +1f, +1f, 0f).color(255, 255, 255, 255).texture(l, h).light(255).next()
-			vertexConsumer.vertex(model, +1f, -1f, 0f).color(255, 255, 255, 255).texture(l, m).light(255).next()
-			vertexConsumer.vertex(model, -1f, -1f, 0f).color(255, 255, 255, 255).texture(g, m).light(255).next()
+			vertexConsumer.vertex(model, -1f, +1f, 0f).color(255, 255, 255, 255).uv(g, h).light(255).next()
+			vertexConsumer.vertex(model, +1f, +1f, 0f).color(255, 255, 255, 255).uv(l, h).light(255).next()
+			vertexConsumer.vertex(model, +1f, -1f, 0f).color(255, 255, 255, 255).uv(l, m).light(255).next()
+			vertexConsumer.vertex(model, -1f, -1f, 0f).color(255, 255, 255, 255).uv(g, m).light(255).next()
 			matrices.pop()
 		}
 		matrices.pop()
@@ -268,6 +269,16 @@ class WorldMapScreen(text: Text?) : Screen(text) {
 			GLFW.GLFW_KEY_DOWN  -> yOffset--
 		}
 		return super.keyReleased(keyCode, scanCode, modifiers)
+	}
+
+	override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+		when(button){
+			GLFW.GLFW_MOUSE_BUTTON_3 -> {
+				xOffset = client_.player!!.blockX.toFloat()
+				yOffset = client_.player!!.blockZ.toFloat()
+			}
+		}
+		return super.mouseClicked(mouseX, mouseY, button)
 	}
 
 	override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {

@@ -1,6 +1,7 @@
 package here.lenrik.chili_map.client.gui
 
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.VertexConsumer
 import here.lenrik.chili_map.Vec2i
 import here.lenrik.chili_map.client.ChiliMapClient
 import here.lenrik.chili_map.client.config.ChiliMapClientConfig
@@ -16,8 +17,8 @@ import net.minecraft.client.texture.NativeImageBackedTexture
 import net.minecraft.client.texture.TextureManager
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.Identifier
+import net.minecraft.util.math.Axis
 import net.minecraft.util.math.Vec3d
-import net.minecraft.util.math.Vec3f
 import net.minecraft.util.math.Vec3i
 import java.awt.image.BufferedImage
 import java.io.File
@@ -65,10 +66,10 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 			val matrix4f = matrices.peek().model
 			val tl = -6.0f
 			val br = 134.0f
-			backgroundConsumer.vertex(matrix4f, tl, br, -1.0f).color(255, 255, 255, 255).texture(0.0f, 1.0f).light(255).next()
-			backgroundConsumer.vertex(matrix4f, br, br, -1.0f).color(255, 255, 255, 255).texture(1.0f, 1.0f).light(255).next()
-			backgroundConsumer.vertex(matrix4f, br, tl, -1.0f).color(255, 255, 255, 255).texture(1.0f, 0.0f).light(255).next()
-			backgroundConsumer.vertex(matrix4f, tl, tl, -1.0f).color(255, 255, 255, 255).texture(0.0f, 0.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, tl, br, -1.0f).color(255, 255, 255, 255).uv(0.0f, 1.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, br, br, -1.0f).color(255, 255, 255, 255).uv(1.0f, 1.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, br, tl, -1.0f).color(255, 255, 255, 255).uv(1.0f, 0.0f).light(255).next()
+			backgroundConsumer.vertex(matrix4f, tl, tl, -1.0f).color(255, 255, 255, 255).uv(0.0f, 0.0f).light(255).next()
 			val minimapZoom = 1 shl ChiliMapClient.config.minimapZoom
 			val side = 128 * minimapZoom
 			val mapFocusPos = when(ChiliMapClient.config.minimapMode) {
@@ -103,7 +104,7 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 								matrices.translate(it.pos.x, it.pos.z, .0)
 								matrices.scale(4.0f, 4.0f, 3.0f)
 								matrices.translate(0.125, 0.125, 0.0)
-								matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(it.rotation * 22.5f))
+								matrices.multiply(Axis.Z_POSITIVE.rotationDegrees(it.rotation * 22.5f))
 								matrices.translate(-0.125, 0.125, 0.0)
 								val model = matrices.peek().model
 								vertexConsumer.vertex(model, -1f, +1f, 0f).fullbrightTexture(g, h).next()
@@ -164,7 +165,7 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 							matrices.push()
 							matrices.scale(4.0f, 4.0f, 3.0f)
 							matrices.translate(0.125, 0.125, 0.0)
-							matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(it.rotation * 22.5f))
+							matrices.multiply(Axis.Z_POSITIVE.rotationDegrees(it.rotation * 22.5f))
 							matrices.translate(-0.125, 0.125, 0.0)
 							val model = matrices.peek().model
 							vertexConsumer.vertex(model, -1f, +1f, 0f).fullbrightTexture(g, h).next()
@@ -235,10 +236,10 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 
 			val vertexConsumer = vertexConsumers.getBuffer(renderLayer)
 			val z = -0.01f
-			vertexConsumer.vertex(matrix4f, fromXVec, toYVec, z).color(255, 255, 255, 255).texture(fromXTex, toYTex).light(255).next()
-			vertexConsumer.vertex(matrix4f, toXVec, toYVec, z).color(255, 255, 255, 255).texture(toXTex, toYTex).light(255).next()
-			vertexConsumer.vertex(matrix4f, toXVec, fromYVec, z).color(255, 255, 255, 255).texture(toXTex, fromYTex).light(255).next()
-			vertexConsumer.vertex(matrix4f, fromXVec, fromYVec, z).color(255, 255, 255, 255).texture(fromXTex, fromYTex).light(255).next()
+			vertexConsumer.vertex(matrix4f, fromXVec, toYVec, z).color(255, 255, 255, 255).uv(fromXTex, toYTex).light(255).next()
+			vertexConsumer.vertex(matrix4f, toXVec, toYVec, z).color(255, 255, 255, 255).uv(toXTex, toYTex).light(255).next()
+			vertexConsumer.vertex(matrix4f, toXVec, fromYVec, z).color(255, 255, 255, 255).uv(toXTex, fromYTex).light(255).next()
+			vertexConsumer.vertex(matrix4f, fromXVec, fromYVec, z).color(255, 255, 255, 255).uv(fromXTex, fromYTex).light(255).next()
 			matrices.translate(0.0, 0.0, (-z).toDouble())
 		}
 
@@ -255,5 +256,5 @@ class MinimapRenderer(val textureManager: TextureManager) : DrawableHelper() {
 
 }
 
-fun VertexConsumer.fullbrightTexture(u: Float, v: Float): VertexConsumer = this.color(255, 255, 255, 255).texture(u, v).light(255)
+fun VertexConsumer.fullbrightTexture(u: Float, v: Float): VertexConsumer = this.color(255, 255, 255, 255).uv(u, v).light(255)
 

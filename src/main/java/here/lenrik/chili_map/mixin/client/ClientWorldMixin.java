@@ -2,32 +2,20 @@ package here.lenrik.chili_map.mixin.client;
 
 import here.lenrik.chili_map.client.ChiliMapClient;
 import here.lenrik.chili_map.map.MapUpdater;
-import kotlin.NotImplementedError;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Holder;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static org.spongepowered.asm.mixin.injection.At.Shift.AFTER;
 
 @Mixin(ClientWorld.class)
-abstract class ClientWorldMixin extends World {
-	protected ClientWorldMixin (MutableWorldProperties mutableWorldProperties, RegistryKey<World> registryKey, Holder<DimensionType> holder, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l) {
-		super(mutableWorldProperties, registryKey, holder, supplier, bl, bl2, l);
-		throw new NotImplementedError();
-	}
-
+abstract class ClientWorldMixin {
 	@Inject(
 			method = "tickEntities",
 			at = @At(
@@ -37,7 +25,7 @@ abstract class ClientWorldMixin extends World {
 			)
 	) private void updateMap (CallbackInfo info) {
 
-		MapUpdater.updateContainer(this, Objects.requireNonNull(MinecraftClient.getInstance().player));
+		MapUpdater.updateContainer((World)(Object) this, Objects.requireNonNull(MinecraftClient.getInstance().player));
 	}
 
 	@Inject(

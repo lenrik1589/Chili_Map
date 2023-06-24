@@ -1,10 +1,11 @@
 package here.lenrik.chili_map.client.gui
 
 import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.render.*
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.Identifier
-import net.minecraft.util.math.Matrix4f
+import org.joml.Matrix4f
 
 @Suppress("NAME_SHADOWING")
 fun fill(matrices: MatrixStack, x1: Number, y1: Number, x2: Number, y2: Number, color: Int) {
@@ -15,9 +16,9 @@ fun fill(matrices: MatrixStack, x1: Number, y1: Number, x2: Number, y2: Number, 
 	val g = (color shr 16 and 0xFF) / 255.0F
 	val h = (color shr 8 and 0xFF) / 255.0F
 	val j = (color and 0xFF) / 255.0F
-	val bufferBuilder = Tessellator.getInstance().buffer
+	val bufferBuilder = Tessellator.getInstance().bufferBuilder
 	RenderSystem.enableBlend()
-	RenderSystem.disableTexture()
+//	RenderSystem.disableTexture()
 	RenderSystem.defaultBlendFunc()
 	RenderSystem.setShader(GameRenderer::getPositionColorShader)
 	bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR)
@@ -27,8 +28,8 @@ fun fill(matrices: MatrixStack, x1: Number, y1: Number, x2: Number, y2: Number, 
 	bufferBuilder.vertex(matrix, x2, y1, 0.0F).color(g, h, j, f).next()
 	bufferBuilder.vertex(matrix, x1, y1, 0.0F).color(g, h, j, f).next()
 	bufferBuilder.end()
-	BufferRenderer.draw(bufferBuilder)
-	RenderSystem.enableTexture()
+	BufferRenderer.draw(bufferBuilder.end())
+//	RenderSystem.enableTexture()
 	RenderSystem.disableBlend()
 }
 

@@ -114,8 +114,8 @@ libs/
 
 # Common working directory
 run/
-./server
-./client
+/server/
+/client/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar

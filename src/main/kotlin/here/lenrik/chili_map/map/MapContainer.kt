@@ -25,11 +25,9 @@ data class MapContainer(var name: Text, val savePath: Path) {
 	}
 
 	fun getLevel(value: Identifier): LevelMap {
-		return levels.compute(
-			value
-		) { identifier, levelMap -> levelMap ?: LevelMap(identifier, name.copy() + "/" + identifier.toString()).apply {
-			workerThread.start()
-		} }!!
+		return levels.compute(value) { identifier, levelMap ->
+			levelMap ?: LevelMap(identifier, name.copy() + "/" + identifier.toString()).apply { workerThread }
+		}!!
 	}
 
 	fun save(autoSave: Boolean = false) {

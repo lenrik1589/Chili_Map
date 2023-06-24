@@ -11,8 +11,7 @@
     "client.ClientWorldMixin",
     "client.GameOptionsMixin",
     "client.HudMixin",
-    "client.MinecraftClientMixin",
-    "client.MinecraftServerMixin",
+    "client.SessionAccessor",
     "client.PlayerListMixin"
   ],
   "injectors": {

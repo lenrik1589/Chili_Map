@@ -8,11 +8,10 @@ import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
 import net.minecraft.client.gui.widget.ClickableWidget
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.text.Text
-import net.minecraft.text.TranslatableText
 import net.minecraft.util.math.Vec3d
 
 @Suppress("UNUSED_PARAMETER")
-class CreateWaypointScreen(level: LevelMap, pos: Vec3d) : Screen(TranslatableText("Nyah")) {
+class CreateWaypointScreen(level: LevelMap, pos: Vec3d) : Screen(Text.translatable("Nyah")) {
 	val nameField = TextInputField(0, 0, 0, 0, Validators.STF)
 	val posX = TextInputField(0, 0, 0, 0, Validators.DOUBLE)
 	val posY = TextInputField(0, 0, 0, 0, Validators.DOUBLE)
@@ -77,7 +76,9 @@ class CreateWaypointScreen(level: LevelMap, pos: Vec3d) : Screen(TranslatableTex
 		val validator: Validators,
 		startingMessage: Text = Text.of("")
 	) : ClickableWidget(x, y, width, height, startingMessage) {
-		override fun appendNarrations(builder: NarrationMessageBuilder?) = Unit
+		override fun drawWidget(matrices: MatrixStack?, mouseX: Int, mouseY: Int, delta: Float) = Unit
+
+		override fun updateNarration(builder: NarrationMessageBuilder?) = Unit
 
 	}
 }

@@ -67,8 +67,8 @@ class ChiliMapConfigScreen(previous: Screen?) : GuiConfigsBase(10, 50, ChiliMap.
 			get() = StringUtils.translate("${ChiliMap.ModId}.tab.title.${name.lowercase()}")!!
 	}
 
-	override fun onClose() {
-		super.onClose()
+	override fun removed() {
+		super.removed()
 		ChiliMapClient.config.save()
 	}
 }

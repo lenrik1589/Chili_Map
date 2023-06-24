@@ -20,6 +20,8 @@ val malilib by project.properties
 val minihud by project.properties
 val mod_menu by project.properties
 val placeholders by project.properties
+val essential by project.properties
+val chunk_debug by project.properties
 
 quiltflower {
 	addToRuntimeClasspath.set(true)
@@ -29,6 +31,9 @@ repositories {
 	maven {
 		name = "Modrinth"
 		url = uri("https://api.modrinth.com/maven")
+		content {
+			includeGroup("maven.modrinth")
+		}
 	}
 	flatDir {
 		dirs = setOf(file("libs"))
@@ -36,6 +41,12 @@ repositories {
 	maven { 
 		name = "JitPack"
 		url = uri("https://jitpack.io")
+	}
+	maven {
+		url = uri("https://cursemaven.com")
+		content {
+			includeGroup("curse.maven")
+		}
 	}
 	mavenLocal()
 	mavenCentral()
@@ -52,13 +63,13 @@ dependencies {
 	implementation      ("com.github.LlamaLad7:MixinExtras:0.1.1")
 	annotationProcessor ("com.github.LlamaLad7:MixinExtras:0.1.1")
 	modImplementation   ("com.github.gnembon:fabric-carpet:$carpet") { isTransitive = false }
-	modImplementation   ("fi.dy.masa:malilib-fabric:$minecraft-$malilib") { isTransitive = false }
-	modImplementation   ("fi.dy.masa:minihud-fabric:$minecraft-$minihud") { isTransitive = false }
+	modImplementation   ("curse.maven:malilib-303119:$malilib") { isTransitive = false }
+	modImplementation   ("curse.maven:minihud-fabric-244260:$minihud") { isTransitive = false }
 	modImplementation   ("maven.modrinth:modmenu:$mod_menu") { isTransitive = false }
-	modImplementation   ("maven.modrinth:placeholder-api:FplcrCus") { include(this) }
-	modImplementation   ("maven.modrinth:essentialclient:vdSDpP5i")
+	modImplementation   ("maven.modrinth:placeholder-api:$placeholders+$minecraft") { include(this) }
+	modImplementation   ("maven.modrinth:essentialclient:$essential")
 	implementation      ("com.github.senseiwells:Arucas:+")
-	modImplementation   ("maven.modrinth:chunkdebug:qqJd9qYA")
+	modImplementation   ("maven.modrinth:chunkdebug:$chunk_debug")
 
 }
 
